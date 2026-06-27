@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Boys Book Club — MVP v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --moss:#5C7A5C;
+    --moss-dark:#4A6449;
+    --moss-tint:#EAF0E8;
+    --apricot:#E0A878;
+    --apricot-dark:#C98C5C;
+    --apricot-tint:#FBF0E5;
+    --danger:#C1554A;
+    --danger-tint:#FBEAE7;
+    --bg:#FAF9F6;
+    --card:#FFFFFF;
+    --border:#E8E6DF;
+    --ink:#2A2A28;
+    --muted:#7C7A70;
+    --muted-2:#A6A398;
+    --shadow: 0 1px 2px rgba(20,18,12,0.04), 0 10px 24px -10px rgba(20,18,12,0.18);
+    --shadow-sm: 0 1px 2px rgba(20,18,12,0.03), 0 4px 12px -6px rgba(20,18,12,0.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+  }
+  a{ color:var(--moss-dark); text-decoration:none; }
+  a:hover{ text-decoration:underline; }
+
+  /* ============ HEADER ============ */
+  .topbar{
+    background:var(--bg); border-bottom:1px solid var(--border);
+    padding:22px 20px 0; text-align:center;
+  }
+  .topbar .club-name{
+    font-family:'Lobster', cursive; font-weight:400;
+    font-size:34px; margin:0; color:var(--moss-dark); line-height:1.2;
+  }
+
+  /* ============ TABS ============ */
+  .tabs{
+    display:flex; justify-content:center; gap:22px; flex-wrap:wrap;
+    background:var(--bg); padding:10px 10px 0;
+  }
+  .tabs button{
+    background:transparent; border:none; color:var(--muted); padding:8px 2px 12px;
+    font-family:'Inter',sans-serif; font-size:13.5px; font-weight:500;
+    cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .tabs button.active{ color:var(--ink); border-bottom-color:var(--moss); font-weight:600; }
+  .tabs button:hover{ color:var(--ink); }
+
+  .wrap{ max-width:640px; margin:0 auto; padding:20px 16px 40px; }
+  .panel{ display:none; }
+  .panel.active{ display:block; animation:fadein .2s ease; }
+  @keyframes fadein{ from{opacity:0;} to{opacity:1;} }
+
+  /* ============ NOTICE / INSTRUCTIONAL BANNER (flat, not a card) ============ */
+  .notice{
+    display:flex; align-items:flex-start; gap:10px;
+    background:var(--apricot-tint); border-left:4px solid var(--apricot-dark);
+    border-radius:6px; padding:12px 14px; margin-bottom:16px; font-size:13.5px; color:var(--ink);
+    box-shadow:none;
+  }
+  .notice.moss{ background:var(--moss-tint); border-left-color:var(--moss-dark); }
+  .notice .notice-icon{ font-size:15px; line-height:1.45; flex-shrink:0; }
+  .notice-row{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; flex:1; }
+  .notice-text{ line-height:1.45; }
+  .notice .countdown{
+    background:#fff; color:var(--apricot-dark); font-weight:600; padding:3px 10px;
+    border-radius:14px; font-size:12px; white-space:nowrap;
+  }
+  .notice.moss .countdown{ color:var(--moss-dark); }
+  .tie-note{ font-size:12px; color:var(--muted); font-style:italic; margin:-4px 0 14px; }
+
+  .section-label{
+    font-size:11.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted-2);
+    margin:18px 0 8px;
+  }
+  .section-label:first-child{ margin-top:0; }
+
+  /* ============ CARD (actual book entries — keeps elevation) ============ */
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow);
+    margin-bottom:14px; overflow:hidden;
+  }
+  .card.winner{
+    background:linear-gradient(180deg, var(--moss-tint) 0%, var(--card) 130px);
+    border:2px solid var(--moss);
+    box-shadow:0 2px 4px rgba(92,122,92,0.12), 0 16px 32px -12px rgba(92,122,92,0.45);
+  }
+  .card-body{ display:flex; gap:14px; padding:16px; min-width:0; }
+  .cover{
+    flex:0 0 56px; width:56px; height:78px; border-radius:5px; background:#EFEDE6;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    font-size:10px; font-weight:600; color:var(--muted); padding:5px; line-height:1.15;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+    background-size:cover; background-position:center;
+  }
+  .cover.has-cover{ font-size:0; }
+  .card-main{ flex:1; min-width:0; }
+  .card-main h3{ margin:0 0 1px; font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .card-main .author{ font-size:12px; color:var(--muted); margin-bottom:7px; text-transform:uppercase; letter-spacing:0.03em; }
+  .pitch{ font-size:14px; line-height:1.5; margin:0 0 5px; color:var(--ink); }
+  .pitch .pitch-label{ font-size:10.5px; font-weight:700; color:var(--moss-dark); text-transform:uppercase; letter-spacing:0.04em; margin-right:5px; }
+  .card-meta{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; font-size:11.5px; color:var(--muted-2); margin-top:8px; }
+  .badge{ display:inline-block; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:13px; }
+  .badge.rollover{ background:var(--apricot-tint); color:var(--apricot-dark); }
+  .badge.multi{ background:var(--moss-tint); color:var(--moss-dark); }
+  .badge.danger{ background:var(--danger-tint); color:var(--danger); }
+  .badge.selected{ background:var(--moss); color:#fff; font-size:12px; padding:5px 12px; }
+
+  .result-line{ font-size:12.5px; color:var(--muted); margin-top:9px; padding-top:9px; border-top:1px dashed var(--border); }
+  .result-line b{ color:var(--ink); }
+
+  /* ============ STAR RATINGS ============ */
+  .stars-display, .stars-input{ display:inline-flex; align-items:center; gap:2px; vertical-align:middle; }
+  .star-slot{ position:relative; display:inline-block; width:18px; height:18px; flex-shrink:0; }
+  .star-slot svg{ position:absolute; top:0; left:0; width:100%; height:100%; }
+  .star-bg{ overflow:visible; }
+  .star-fill-clip{ position:absolute; top:0; left:0; height:100%; overflow:hidden; }
+  .star-fill-clip svg{ width:18px; height:18px; }
+  .star-half{
+    -webkit-appearance:none; appearance:none; outline:none; position:absolute; top:0; bottom:0;
+    width:50%; background:transparent; border:none; padding:0; margin:0; cursor:pointer; z-index:2;
+  }
+  .star-half-left{ left:0; }
+  .star-half-right{ right:0; }
+  .stars-input.readonly .star-half{ cursor:default; pointer-events:none; }
+  .rating-row{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:9px; padding-top:9px;
+    border-top:1px dashed var(--border); font-size:12.5px; color:var(--muted);
+  }
+  .rating-row .rating-label{ font-weight:700; color:var(--ink); font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em; }
+  .rating-row .rating-num{ font-weight:700; color:var(--apricot-dark); font-size:13px; }
+  .overall-pending{ font-size:12px; color:var(--muted-2); font-style:italic; }
+
+  .sort-toggle{ display:flex; gap:8px; margin-bottom:14px; }
+  .sort-toggle button{
+    -webkit-appearance:none; appearance:none; outline:none; font-family:'Inter',sans-serif;
+    background:var(--card); border:1px solid var(--border); color:var(--muted);
+    border-radius:7px; padding:7px 13px; font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .sort-toggle button.active{ background:var(--moss); border-color:var(--moss); color:#fff; }
+
+  .rank-num{
+    flex:0 0 24px; display:flex; align-items:flex-start; justify-content:center; padding-top:2px;
+    font-weight:700; color:var(--muted-2); font-size:13px;
+  }
+  .rank-num.is-winner{
+    background:var(--moss); color:#fff; border-radius:50%; width:24px; height:24px;
+    align-items:center; justify-content:center; padding-top:0; font-size:13px;
+  }
+
+  /* ============ VOTE CONTROLS — compact row, icon+word veto ============ */
+  .vote-controls{
+    border-top:1px dashed var(--border); padding:12px 16px; display:flex; align-items:center;
+    justify-content:space-between; gap:12px; background:#FCFBF8; flex-wrap:wrap; min-width:0;
+  }
+  .stepper-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; row-gap:8px; min-width:0; }
+  .stepper-row .stepper-label{ font-size:11px; font-weight:700; color:var(--muted-2); text-transform:uppercase; letter-spacing:0.05em; margin-right:2px; }
+  .stepper-row button:not(.veto-btn){
+    -webkit-appearance:none; appearance:none; outline:none; font-family:'Inter',sans-serif;
+    width:30px; height:30px; border-radius:7px; border:1px solid var(--border);
+    background:var(--card); color:var(--moss-dark); font-size:16px; cursor:pointer; font-weight:700; line-height:1;
+  }
+  .stepper-row button:disabled{ opacity:0.3; cursor:not-allowed; }
+  .stepper-row .pts{ font-weight:700; font-size:18px; min-width:18px; text-align:center; }
+  .veto-divider{ width:1px; height:22px; background:var(--border); margin:0 2px; }
+  .veto-btn{
+    -webkit-appearance:none; appearance:none; outline:none;
+    width:auto; height:auto;
+    border-radius:7px; border:1.5px solid var(--danger); background:transparent;
+    color:var(--danger); font-size:12.5px; font-weight:700; cursor:pointer; padding:7px 12px;
+    display:flex; align-items:center; gap:6px; white-space:nowrap; flex-shrink:0;
+    font-family:'Inter',sans-serif;
+  }
+  .veto-btn .icon{ display:inline-flex; flex-shrink:0; }
+  .veto-btn .icon svg{ display:block; width:13px; height:13px; }
+  .veto-btn.active{ background:var(--danger); color:#fff; border-color:var(--danger); }
+  .veto-btn:disabled{ opacity:0.3; cursor:not-allowed; }
+  .own-note{ font-size:12.5px; color:var(--muted-2); font-style:italic; width:100%; text-align:center; }
+
+  /* ============ BOTTOM-STICKY VOTE ACTION BAR ============ */
+  .vote-footer{
+    position:fixed; left:0; right:0; bottom:0; z-index:30;
+    background:var(--card); border-top:1px solid var(--border);
+    box-shadow: 0 -10px 28px -10px rgba(20,18,12,0.28), 0 -2px 6px rgba(20,18,12,0.06);
+    padding:13px 16px calc(13px + env(safe-area-inset-bottom));
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .vote-footer .pts-display{ font-size:13.5px; color:var(--ink); }
+  .vote-footer .pts-display b{ color:var(--moss-dark); font-size:16px; }
+  .submit-vote{
+    -webkit-appearance:none; appearance:none; outline:none; font-family:'Inter',sans-serif;
+    background:var(--moss); color:#fff; border:none; border-radius:7px;
+    padding:10px 18px; font-weight:600; font-size:13.5px; cursor:pointer;
+  }
+  .submit-vote:disabled{ opacity:0.4; cursor:not-allowed; }
+  .submit-vote.locked{ background:var(--apricot-dark); }
+  .vote-footer-spacer{ height:78px; }
+
+  /* ============ FORM ============ */
+  .nominate-form{
+    background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); padding:17px;
+    margin-bottom:18px;
+  }
+  .nominate-form h3{ margin:0 0 12px; font-size:14.5px; font-weight:600; }
+  .field{ margin-bottom:11px; }
+  .field label{ display:block; font-size:11.5px; color:var(--muted); margin-bottom:4px; }
+  .field input, .field textarea{
+    width:100%; background:var(--bg); border:1px solid var(--border); border-radius:7px;
+    padding:9px 10px; font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink);
+  }
+  .field textarea{ resize:vertical; min-height:54px; }
+  .char-count{ font-size:11px; color:var(--muted-2); text-align:right; margin-top:2px; }
+  .submit-nom{
+    -webkit-appearance:none; appearance:none; outline:none; font-family:'Inter',sans-serif;
+    background:var(--moss); color:#fff; border:none; border-radius:7px;
+    padding:9px 19px; font-weight:600; font-size:13px; cursor:pointer;
+  }
+  .merge-hint{
+    font-size:11.5px; color:var(--apricot-dark); background:var(--apricot-tint);
+    padding:7px 10px; border-radius:7px; margin-bottom:10px; display:none;
+  }
+  .toggle-form-btn{
+    -webkit-appearance:none; appearance:none; outline:none; font-family:'Inter',sans-serif;
+    background:var(--moss); border:none; color:#fff;
+    border-radius:10px; padding:16px; width:100%; font-weight:700; font-size:15px; cursor:pointer;
+    margin-bottom:18px; box-shadow:0 4px 14px -4px rgba(92,122,92,0.55), var(--shadow-sm);
+    display:flex; align-items:center; justify-content:center; gap:8px; letter-spacing:0.01em;
+  }
+  .toggle-form-btn:hover{ background:var(--moss-dark); }
+  .toggle-form-btn .plus-icon{ font-size:18px; font-weight:700; line-height:1; }
+
+  /* ============ HISTORY ============ */
+  .history-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:14px; }
+  .hist-card{
+    background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); padding:13px;
+    display:flex; flex-direction:column;
+  }
+  .hist-card-top{ display:flex; gap:11px; }
+  .hist-card h4{ margin:0 0 1px; font-size:14px; font-weight:600; }
+  .hist-card .author{ font-size:11px; color:var(--muted); margin-bottom:4px; }
+  .hist-card .meta{ font-size:11px; color:var(--muted-2); }
+
+  /* rules page */
+  .rules-list{ list-style:none; padding:0; margin:0; }
+  .rules-list li{
+    background:var(--card); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow-sm); padding:13px 15px;
+    margin-bottom:9px; font-size:13.5px; line-height:1.5; color:var(--ink);
+  }
+  .rules-list li b{ color:var(--moss-dark); }
+  .rules-section-title{
+    font-size:11.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted-2);
+    margin:20px 0 8px;
+  }
+  .rules-section-title:first-child{ margin-top:0; }
+  .rules-list li.flavor{ background:var(--apricot-tint); border-color:var(--apricot); }
+  .rules-list li.flavor b{ color:var(--apricot-dark); }
+
+  .toast{
+    position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(10px);
+    background:var(--moss-dark); color:#fff; padding:9px 18px; border-radius:7px; font-size:13px;
+    opacity:0; pointer-events:none; transition:all .25s ease; z-index:100;
+    box-shadow:0 4px 14px rgba(0,0,0,0.18);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  footer{ text-align:center; font-size:11.5px; color:var(--muted-2); padding:20px 16px 10px; }
+</style>
+</head>
+<body>
+
+<div style="background:#2A2A28; color:#fff; text-align:center; padding:8px 16px; font-size:12.5px; font-family:'Inter',sans-serif;">
+  🎭 <b>Demo mode</b> — fake data, nothing here saves or affects the real club. <a href="/" style="color:#E0A878; text-decoration:underline;">Real app →</a>
+</div>
+
+<!-- ===================== HEADER ===================== -->
+<div class="topbar">
+  <h1 class="club-name">The Boys Book Club</h1>
+</div>
+
+<!-- ===================== TABS ===================== -->
+<div class="tabs" id="tabs">
+  <button data-tab="nominate" class="active">Nominate</button>
+  <button data-tab="vote">Vote</button>
+  <button data-tab="results">Results</button>
+  <button data-tab="history">History</button>
+  <button data-tab="rules">Rules</button>
+</div>
+
+<div class="wrap">
+
+  <!-- ===================== NOMINATE PANEL ===================== -->
+  <div class="panel active" id="panel-nominate">
+    <div class="notice">
+      <span class="notice-icon">📌</span>
+      <div class="notice-row">
+        <div class="notice-text">Nominations stay hidden until voting opens. Full rules in the Rules tab.</div>
+        <span class="countdown">Closes in 4 days</span>
+      </div>
+    </div>
+
+    <button class="toggle-form-btn" id="toggleNomForm"><span class="plus-icon">+</span> Submit your nomination</button>
+    <div class="nominate-form" id="nomForm" style="display:none;">
+      <h3>New nomination</h3>
+      <div class="merge-hint" id="mergeHint"></div>
+      <div class="field"><label>Book title</label><input id="nf-title" placeholder="e.g. The Three-Body Problem"></div>
+      <div class="field"><label>Author</label><input id="nf-author" placeholder="e.g. Liu Cixin"></div>
+      <div class="field">
+        <label>Why this book (1–2 sentences)</label>
+        <textarea id="nf-blurb" maxlength="220" placeholder="Sell it to the room."></textarea>
+        <div class="char-count"><span id="nf-count">0</span>/220</div>
+      </div>
+      <div class="field"><label>Review link (optional — Goodreads, StoryGraph, etc.)</label><input id="nf-link" placeholder="https://..."></div>
+      <button class="submit-nom" id="submitNom">Submit nomination</button>
+    </div>
+
+    <div id="rolloverSection"></div>
+    <div class="notice" id="pendingCount"></div>
+  </div>
+
+  <!-- ===================== VOTE PANEL ===================== -->
+  <div class="panel" id="panel-vote">
+    <div class="notice">
+      <span class="notice-icon">📌</span>
+      <div class="notice-row">
+        <div class="notice-text">Distribute <b>3 points</b> or use your <b style="color:var(--danger)">one veto</b>. Hidden until voting closes.</div>
+        <span class="countdown">Closes in 7 days</span>
+      </div>
+    </div>
+    <div id="voteList"></div>
+    <div class="vote-footer-spacer"></div>
+  </div>
+
+  <!-- ===================== RESULTS PANEL ===================== -->
+  <div class="panel" id="panel-results">
+    <div class="notice moss">
+      <span class="notice-icon">🎉</span>
+      <div class="notice-text">All nominations revealed — here's how it shook out.</div>
+    </div>
+    <div class="tie-note" id="tieNote"></div>
+    <div id="resultsList"></div>
+    <div class="notice moss" id="meetingCallout"></div>
+  </div>
+
+  <!-- ===================== HISTORY PANEL ===================== -->
+  <div class="panel" id="panel-history">
+    <div class="notice">
+      <span class="notice-icon">📚</span>
+      <div class="notice-text">Everything the club has read, in order.</div>
+    </div>
+    <div class="sort-toggle" id="historySortToggle">
+      <button data-sort="date" class="active">Date read</button>
+      <button data-sort="rating">Top rated</button>
+    </div>
+    <div class="history-grid" id="historyGrid"></div>
+  </div>
+
+  <!-- ===================== RULES PANEL ===================== -->
+  <div class="panel" id="panel-rules">
+    <div class="rules-section-title">Nomination week (1 week)</div>
+    <ul class="rules-list">
+      <li><b>One nomination per member</b>, and it has to be a book you haven't read yourself. Honor system — we don't check.</li>
+      <li><b>New</b> nominations stay hidden while nomination week is open and reveal together once voting opens. <b>Rollover</b> books from last cycle are already public, so they show up right away.</li>
+      <li>No one is required to nominate.</li>
+      <li>If the same book gets nominated by <b>two or more people independently</b>, it merges into one entry with a head start: <b>2 points for a double-nomination, 3 for a triple</b> (capped at 3). Both pitches are shown side by side.</li>
+    </ul>
+
+    <div class="rules-section-title">If nothing gets nominated</div>
+    <ul class="rules-list">
+      <li class="flavor">If a cycle ends with <b>zero new nominations and zero rollovers</b>, <b>Mor'gathuul the Atrocious, God of Vorlathiss</b>, claims the club's souls and we are disbanded for all eternity. (Not really — nomination week just automatically extends.)</li>
+    </ul>
+
+    <div class="rules-section-title">Voting week (1 week)</div>
+    <ul class="rules-list">
+      <li>Every member gets <b>3 points</b> to distribute however they want — all 3 on one book, or split across a few.</li>
+      <li>Instead of points, you can use your <b>one veto</b> to instantly eliminate a book. Using it forfeits your 3 points that round.</li>
+      <li>You <b>can't vote on a book you nominated</b> (or co-nominated, for a merged double/triple).</li>
+      <li>During voting week, nothing is visible — no totals, no individual votes. Once results are in, each book's final point total is shown, and a veto reveals who cast it.</li>
+    </ul>
+
+    <div class="rules-section-title">Results</div>
+    <ul class="rules-list">
+      <li>Highest point total wins. <b>Ties</b> are broken first by whichever book got votes from the most unique people, then by whichever was submitted earliest.</li>
+      <li>Only the <b>winning book's nominator(s)</b> are revealed. Everyone else stays anonymous.</li>
+      <li>A vetoed book shows who vetoed it and what its point total would've been.</li>
+    </ul>
+
+    <div class="rules-section-title">Rollover</div>
+    <ul class="rules-list">
+      <li>The <b>2nd and 3rd place</b> finishers automatically roll into next cycle's nomination list, points reset to zero. (Just 2nd place if there were only 2 nominees.)</li>
+      <li>A book can roll over <b>up to twice</b> (3 cycles total) before it has to be freshly renominated to stay eligible.</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- ===================== BOTTOM-STICKY VOTE ACTION BAR ===================== -->
+<div class="vote-footer" id="voteFooter" style="display:none;">
+  <div class="pts-display">Points remaining: <b id="ptsRemaining">3</b> / 3</div>
+  <button class="submit-vote" id="lockVote">Lock in my vote</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>BBC MVP v1 — prototype mockup, not yet wired to a real backend.</footer>
+
+<script>
+// ============================================================
+// MOCK DATA
+// ============================================================
+const currentUser = 'tking'; // hardcoded for this pass — no user switcher for now
+
+const NOMINATIONS = [
+  { id:'n1', title:'Project Hail Mary', author:'Andy Weir',
+    pitches:[{ text:"A guy wakes up alone on a spaceship with amnesia and has to save humanity. Fun, fast, not depressing for once.", nominator:'tking' }],
+    link:'https://www.goodreads.com/book/show/54493401', submitted:'2026-06-01T09:14:00', rollover:0 },
+  { id:'n2', title:'Klara and the Sun', author:'Kazuo Ishiguro',
+    pitches:[
+      { text:"Quiet, devastating sci-fi about an AI companion. Good one to actually have feelings about for once.", nominator:'agarcia' },
+      { text:"Saw this on three different best-of lists this year, figured we should just read it.", nominator:'ccarter' },
+    ],
+    link:'https://www.goodreads.com/book/show/54791209', submitted:'2026-06-01T14:02:00', rollover:0 },
+  { id:'n3', title:'Atomic Habits', author:'James Clear',
+    pitches:[{ text:"Self-help, yes, I know. But genuinely useful and a quick read.", nominator:'bpatel' }],
+    link:'', submitted:'2026-06-02T08:40:00', rollover:0 },
+  { id:'n4', title:'The Silent Patient', author:'Alex Michaelides',
+    pitches:[{ text:"Twisty thriller, one of those 'wait, WHAT' endings. Good discussion bait.", nominator:'mrodriguez' }],
+    link:'https://www.goodreads.com/book/show/40160172', submitted:'2026-06-02T19:55:00', rollover:0 },
+  { id:'n5', title:'Sapiens', author:'Yuval Noah Harari',
+    pitches:[{ text:"Big-brain history of humanity. Rolled over from last cycle — still holding strong.", nominator:'rnguyen' }],
+    link:'https://www.goodreads.com/book/show/23692271', submitted:'2026-04-20T11:00:00', rollover:1 },
+];
+
+function headStart(entry){ return entry.pitches.length>=3 ? 3 : entry.pitches.length===2 ? 2 : 0; }
+
+const RESULTS = [
+  { id:'n1', points:5, voters:4, vetoedBy:null, rank:1 },
+  { id:'n2', points:4, voters:3, vetoedBy:null, rank:2 },
+  { id:'n5', points:4, voters:2, vetoedBy:null, rank:3 },
+  { id:'n4', points:0, voters:0, vetoedBy:'dchen', wouldBePoints:3, rank:null },
+  { id:'n3', points:1, voters:1, vetoedBy:null, rank:4 },
+];
+
+const HISTORY = [
+  { id:'h1', title:'The Martian', author:'Andy Weir', nominator:'dchen', date:'May 2026', overall:4.5 },
+  { id:'h2', title:'Educated', author:'Tara Westover', nominator:'agarcia', date:'Mar 2026', overall:4 },
+  { id:'h3', title:'Where the Crawdads Sing', author:'Delia Owens', nominator:'tking', date:'Jan 2026', overall:3.5 },
+  { id:'h4', title:"Born a Crime", author:'Trevor Noah', nominator:'bpatel', date:'Nov 2025', overall:4.5 },
+  { id:'h5', title:'Dungeon Crawler Carl', author:'Matt Dinniman', nominator:'btaylor', date:'Sep 2025', overall:5 },
+];
+
+let historySortMode = 'date'; // 'date' or 'rating'
+const myRatings = {}; // bookKey -> rating value (0.5 increments), in-memory only for this mockup
+
+const STAR_PATH = 'M12 2.4 14.86 8.46 21.5 9.36 16.7 14.04 17.9 20.6 12 17.4 6.1 20.6 7.3 14.04 2.5 9.36 9.14 8.46 Z';
+
+function starIconHTML(){
+  return `<svg class="star-bg" viewBox="0 0 24 24"><path d="${STAR_PATH}" fill="none" stroke="var(--apricot-dark)" stroke-width="1.3"/></svg>`;
+}
+function starFillHTML(pct){
+  return `<div class="star-fill-clip" style="width:${pct}%"><svg viewBox="0 0 24 24"><path d="${STAR_PATH}" fill="var(--apricot-dark)"/></svg></div>`;
+}
+
+// Read-only stars (e.g. BBC Overall average)
+function renderStarsDisplay(value){
+  let html = '<span class="stars-display">';
+  for(let i=1;i<=5;i++){
+    const fill = Math.max(0, Math.min(1, value - (i-1)));
+    html += `<span class="star-slot">${starIconHTML()}${starFillHTML(fill*100)}</span>`;
+  }
+  html += '</span>';
+  return html;
+}
+
+// Interactive star picker — click left/right half of each star to set 0.5 increments
+function renderStarsInput(bookKey, value){
+  let html = `<span class="stars-input" data-book="${bookKey}">`;
+  for(let i=1;i<=5;i++){
+    const fill = Math.max(0, Math.min(1, value - (i-1)));
+    html += `<span class="star-slot">
+      ${starIconHTML()}${starFillHTML(fill*100)}
+      <button class="star-half star-half-left" data-book="${bookKey}" data-value="${i-0.5}"></button>
+      <button class="star-half star-half-right" data-book="${bookKey}" data-value="${i}"></button>
+    </span>`;
+  }
+  html += '</span>';
+  return html;
+}
+
+function wireStarInputs(container){
+  container.querySelectorAll('.star-half').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.book;
+      const val = parseFloat(btn.dataset.value);
+      myRatings[key] = (myRatings[key] === val) ? val : val; // always set to clicked value
+      renderResults();
+      renderHistory();
+    });
+  });
+}
+
+let voteState = { points:{}, vetoId:null, locked:false };
+
+// ============================================================
+// INIT
+// ============================================================
+function init(){
+  document.querySelectorAll('#tabs button').forEach(b => {
+    b.addEventListener('click', () => switchTab(b.dataset.tab));
+  });
+
+  document.getElementById('toggleNomForm').addEventListener('click', () => {
+    const f = document.getElementById('nomForm');
+    f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  });
+  document.getElementById('nf-blurb').addEventListener('input', e => {
+    document.getElementById('nf-count').textContent = e.target.value.length;
+  });
+  document.getElementById('nf-title').addEventListener('input', checkMerge);
+  document.getElementById('nf-author').addEventListener('input', checkMerge);
+  document.getElementById('submitNom').addEventListener('click', submitNomination);
+  document.getElementById('lockVote').addEventListener('click', lockInVote);
+
+  document.querySelectorAll('#historySortToggle button').forEach(b => {
+    b.addEventListener('click', () => {
+      historySortMode = b.dataset.sort;
+      document.querySelectorAll('#historySortToggle button').forEach(x => x.classList.toggle('active', x === b));
+      renderHistory();
+    });
+  });
+
+  renderNominate();
+  renderVote();
+  renderResults();
+  renderHistory();
+}
+
+function switchTab(tab){
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  document.getElementById('voteFooter').style.display = (tab === 'vote') ? 'flex' : 'none';
+}
+
+function findExisting(title, author){
+  return NOMINATIONS.find(n => n.title.trim().toLowerCase()===title.trim().toLowerCase() && n.author.trim().toLowerCase()===author.trim().toLowerCase());
+}
+
+function checkMerge(){
+  const title = document.getElementById('nf-title').value;
+  const author = document.getElementById('nf-author').value;
+  const hint = document.getElementById('mergeHint');
+  if(title && author && findExisting(title, author)){
+    hint.style.display = 'block';
+    hint.textContent = `This matches an existing nomination — your pitch will be added to it as a co-nomination instead of a new entry.`;
+  } else {
+    hint.style.display = 'none';
+  }
+}
+
+// ============================================================
+// NOMINATE
+// ============================================================
+function submitNomination(){
+  const title = document.getElementById('nf-title').value.trim();
+  const author = document.getElementById('nf-author').value.trim();
+  const blurb = document.getElementById('nf-blurb').value.trim();
+  const link = document.getElementById('nf-link').value.trim();
+  if(!title || !author || !blurb){ showToast('Title, author, and a blurb are required.'); return; }
+
+  const existing = findExisting(title, author);
+  if(existing){
+    existing.pitches.push({ text:blurb, nominator:currentUser });
+    showToast('Added as a co-nomination — merged with the existing entry.');
+  } else {
+    NOMINATIONS.push({ id:'n'+(NOMINATIONS.length+1), title, author, link,
+      pitches:[{ text:blurb, nominator:currentUser }], submitted:new Date().toISOString(), rollover:0 });
+    showToast('Nomination submitted anonymously.');
+  }
+  ['nf-title','nf-author','nf-blurb','nf-link'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('nf-count').textContent='0';
+  document.getElementById('mergeHint').style.display='none';
+  document.getElementById('nomForm').style.display='none';
+  renderNominate();
+}
+
+function coverHTML(title, author){
+  const id = 'cov_' + (coverIdCounter++);
+  pendingCovers.push({ id, title, author: author || '' });
+  return `<div class="cover" id="${id}">${escapeHtml(title)}</div>`;
+}
+
+let coverIdCounter = 0;
+let pendingCovers = [];
+const coverCache = {}; // "title|author" (lowercased) -> image URL, or null if no match found
+
+function flushCoverLoads(){
+  const batch = pendingCovers;
+  pendingCovers = [];
+  batch.forEach(c => loadCover(c.title, c.author, c.id));
+}
+
+async function loadCover(title, author, elId){
+  const key = (title + '|' + author).toLowerCase();
+  if (coverCache.hasOwnProperty(key)) {
+    applyCover(elId, coverCache[key]);
+    return;
+  }
+  try {
+    const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=1&fields=cover_i`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const doc = data.docs && data.docs[0];
+    const coverUrl = (doc && doc.cover_i) ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : null;
+    coverCache[key] = coverUrl;
+    applyCover(elId, coverUrl);
+  } catch (e) {
+    // Network/CORS issue, or no match — fall back to the placeholder, no error shown to the user.
+    coverCache[key] = null;
+    applyCover(elId, null);
+  }
+}
+
+function applyCover(elId, url){
+  const el = document.getElementById(elId);
+  if (!el) return; // panel may have re-rendered or switched away before the lookup finished
+  if (url) {
+    el.style.backgroundImage = `url('${url}')`;
+    el.classList.add('has-cover');
+    el.textContent = '';
+  }
+  // no url found — placeholder (gray box + title text) stays exactly as already rendered
+}
+
+function renderNominate(){
+  const rollovers = NOMINATIONS.filter(n => n.rollover > 0);
+  const fresh = NOMINATIONS.filter(n => n.rollover === 0);
+
+  const rolloverWrap = document.getElementById('rolloverSection');
+  if(rollovers.length){
+    rolloverWrap.innerHTML = `<div class="section-label">Rolling over from last cycle</div>` +
+      rollovers.map(n => `
+        <div class="card">
+          <div class="card-body">
+            ${coverHTML(n.title, n.author)}
+            <div class="card-main">
+              <h3>${escapeHtml(n.title)}</h3>
+              <div class="author">${escapeHtml(n.author)}</div>
+              <p class="pitch">${escapeHtml(n.pitches[0].text)}</p>
+              <div class="card-meta">
+                <span class="badge rollover">Rollover ${n.rollover}/2</span>
+                ${n.link ? `<a href="${escapeAttr(n.link)}" target="_blank" rel="noopener">Review link ↗</a>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>`).join('') +
+      `<div class="section-label">New this week</div>`;
+  } else {
+    rolloverWrap.innerHTML = `<div class="section-label">New this week</div>`;
+  }
+
+  document.getElementById('pendingCount').innerHTML =
+    `<span class="notice-icon">👀</span><div class="notice-text"><b>${fresh.length}</b> new nomination${fresh.length===1?'':'s'} submitted so far.</div>`;
+  flushCoverLoads();
+}
+
+// ============================================================
+// VOTE (live sandbox, single fixed viewer)
+// ============================================================
+function pointsUsed(){ return Object.values(voteState.points).reduce((a,b)=>a+b,0); }
+
+function renderVote(){
+  const list = document.getElementById('voteList');
+  list.innerHTML = '';
+  const remaining = voteState.vetoId ? 0 : (3 - pointsUsed());
+  document.getElementById('ptsRemaining').textContent = remaining;
+
+  const lockBtn = document.getElementById('lockVote');
+  lockBtn.disabled = !voteState.locked && (!voteState.vetoId && pointsUsed()===0);
+  lockBtn.textContent = voteState.locked ? 'Vote locked ✓ (tap to edit)' : 'Lock in my vote';
+  lockBtn.classList.toggle('locked', !!voteState.locked);
+
+  NOMINATIONS.forEach(n => {
+    const isOwn = n.pitches.some(p => p.nominator === currentUser);
+    const myPts = voteState.points[n.id] || 0;
+    const isVetoTarget = voteState.vetoId === n.id;
+    const pointsDisabledByVeto = !!voteState.vetoId && !isVetoTarget;
+    const hs = headStart(n);
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-body">
+        ${coverHTML(n.title, n.author)}
+        <div class="card-main">
+          <h3>${escapeHtml(n.title)}</h3>
+          <div class="author">${escapeHtml(n.author)}</div>
+          ${n.pitches.map((p,i) => `<p class="pitch">${n.pitches.length>1?`<span class="pitch-label">Pitch ${i+1}</span>`:''}${escapeHtml(p.text)}</p>`).join('')}
+          <div class="card-meta">
+            ${n.pitches.length>1 ? `<span class="badge multi">${n.pitches.length===2?'Double':'Triple'} nomination · starts at ${hs} pts</span>` : ''}
+            ${n.rollover>0 ? `<span class="badge rollover">Rollover ${n.rollover}/2</span>` : ''}
+            ${n.link ? `<a href="${escapeAttr(n.link)}" target="_blank" rel="noopener">Review link ↗</a>` : ''}
+          </div>
+        </div>
+      </div>
+      <div class="vote-controls">
+        ${isOwn ? `<span class="own-note">Your nomination — no self-voting.</span>` : `
+          <div class="stepper-row">
+            <span class="stepper-label">Points</span>
+            <button data-action="minus" data-id="${n.id}" ${(myPts<=0||pointsDisabledByVeto||voteState.locked)?'disabled':''}>−</button>
+            <span class="pts">${myPts}</span>
+            <button data-action="plus" data-id="${n.id}" ${(remaining<=0||pointsDisabledByVeto||voteState.locked)?'disabled':''}>+</button>
+            <div class="veto-divider"></div>
+            <button class="veto-btn ${isVetoTarget?'active':''}" data-action="veto" data-id="${n.id}"
+              ${(voteState.locked || (voteState.vetoId && !isVetoTarget))?'disabled':''}>
+              <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="5.8" y1="18.2" x2="18.2" y2="5.8"/></svg></span>Veto
+            </button>
+          </div>
+        `}
+      </div>`;
+    list.appendChild(card);
+  });
+
+  list.querySelectorAll('button[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      if(voteState.locked) return;
+      if(action==='plus' && pointsUsed() < 3 && !voteState.vetoId){ voteState.points[id] = (voteState.points[id]||0)+1; }
+      if(action==='minus' && (voteState.points[id]||0) > 0){ voteState.points[id] = voteState.points[id]-1; }
+      if(action==='veto'){
+        voteState.vetoId = voteState.vetoId === id ? null : id;
+        if(voteState.vetoId) voteState.points = {};
+      }
+      renderVote();
+    });
+  });
+  flushCoverLoads();
+}
+
+function lockInVote(){
+  voteState.locked = !voteState.locked;
+  showToast(voteState.locked ? 'Vote locked in.' : 'Vote unlocked for editing.');
+  renderVote();
+}
+
+// ============================================================
+// RESULTS
+// ============================================================
+function renderResults(){
+  const list = document.getElementById('resultsList');
+  list.innerHTML = '';
+  document.getElementById('tieNote').textContent =
+    "2nd and 3rd place tied at 4 points each — 2nd place wins the tie because it got votes from more unique members (3 vs 2).";
+
+  const sorted = [...RESULTS].sort((a,b) => (a.rank===null?99:a.rank) - (b.rank===null?99:b.rank));
+
+  sorted.forEach(r => {
+    const n = NOMINATIONS.find(x=>x.id===r.id);
+    const isWinner = r.rank === 1;
+    const isVetoed = !!r.vetoedBy;
+    const card = document.createElement('div');
+    card.className = 'card' + (isWinner ? ' winner' : '');
+    card.innerHTML = `
+      <div class="card-body">
+        <div class="rank-num${isWinner?' is-winner':''}">${r.rank ? r.rank : '–'}</div>
+        ${coverHTML(n.title, n.author)}
+        <div class="card-main">
+          <h3>${escapeHtml(n.title)} ${isWinner?'<span class="badge selected">🏆 Selected</span>':''} ${isVetoed?'<span class="badge danger">Vetoed</span>':''}</h3>
+          <div class="author">${escapeHtml(n.author)}</div>
+          ${n.pitches.map((p,i) => `<p class="pitch">${n.pitches.length>1?`<span class="pitch-label">Pitch ${i+1}</span>`:''}${escapeHtml(p.text)}</p>`).join('')}
+          <div class="card-meta">
+            ${n.pitches.length>1 ? `<span class="badge multi">${n.pitches.length===2?'Double':'Triple'} nomination</span>` : ''}
+            ${n.link ? `<a href="${escapeAttr(n.link)}" target="_blank" rel="noopener">Review link ↗</a>` : ''}
+          </div>
+          <div class="result-line">
+            ${isWinner ? `<b>${r.points} points</b> · nominated by <b>${n.pitches.map(p=>p.nominator).join(' & ')}</b>` : ''}
+            ${!isWinner && !isVetoed && r.rank ? `${r.points} points · ${r.voters} unique voter${r.voters===1?'':'s'} ${r.rank<=3 ? `· <span class="badge rollover">Rolls over (${(n.rollover||0)+1}/2)</span>` : '· not enough to roll over'}` : ''}
+            ${!isWinner && !isVetoed && !r.rank ? `${r.points} point${r.points===1?'':'s'} · didn't place — gone unless renominated fresh` : ''}
+            ${isVetoed ? `Vetoed by <b>${r.vetoedBy}</b> · would've scored <b>${r.wouldBePoints} points</b> · gone for good` : ''}
+          </div>
+          ${isWinner ? `
+          <div class="rating-row">
+            <span class="rating-label">Your rating</span>
+            ${renderStarsInput('results-' + n.id, myRatings['results-' + n.id] || 0)}
+            <span class="overall-pending">BBC Overall reveals after the meeting</span>
+          </div>` : ''}
+        </div>
+      </div>`;
+    list.appendChild(card);
+  });
+
+  wireStarInputs(list);
+
+  document.getElementById('meetingCallout').innerHTML =
+    `<span class="notice-icon">🗓️</span><div class="notice-text"><b>Next meeting:</b> Wednesday, August 5, 2026 — 4 weeks out.</div>`;
+  flushCoverLoads();
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function renderHistory(){
+  const grid = document.getElementById('historyGrid');
+  grid.innerHTML = '';
+
+  const sorted = [...HISTORY].sort((a,b) => {
+    if(historySortMode === 'rating') return b.overall - a.overall;
+    return new Date(b.date + ' 1') - new Date(a.date + ' 1'); // newest first by date string
+  });
+
+  sorted.forEach(h => {
+    const key = 'history-' + h.id;
+    const myVal = myRatings[key] !== undefined ? myRatings[key] : h.overall; // default to overall if unrated for this mock
+    const c = document.createElement('div');
+    c.className = 'hist-card';
+    c.innerHTML = `
+      <div class="hist-card-top">
+        ${coverHTML(h.title, h.author)}
+        <div>
+          <h4>${escapeHtml(h.title)}</h4>
+          <div class="author">${escapeHtml(h.author)}</div>
+          <div class="meta">Read ${h.date} · nominated by ${h.nominator}</div>
+        </div>
+      </div>
+      <div class="rating-row">
+        <span class="rating-label">BBC Overall</span>
+        ${renderStarsDisplay(h.overall)}
+        <span class="rating-num">${h.overall.toFixed(1)}</span>
+      </div>
+      <div class="rating-row">
+        <span class="rating-label">Your rating</span>
+        ${renderStarsInput(key, myVal)}
+      </div>`;
+    grid.appendChild(c);
+  });
+
+  wireStarInputs(grid);
+  flushCoverLoads();
+}
+
+// ============================================================
+// UTIL
+// ============================================================
+function escapeHtml(str){ const d=document.createElement('div'); d.textContent=str; return d.innerHTML; }
+function escapeAttr(str){ return str.replace(/"/g,'&quot;'); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+init();
+</script>
+</body>
+</html>

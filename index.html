@@ -104,7 +104,9 @@
     display:flex; align-items:center; justify-content:center; text-align:center;
     font-size:10px; font-weight:600; color:var(--muted); padding:5px; line-height:1.15;
     box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+    background-size:cover; background-position:center;
   }
+  .cover.has-cover{ font-size:0; }
   .card-main{ flex:1; min-width:0; }
   .card-main h3{ margin:0 0 1px; font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .card-main .author{ font-size:12px; color:var(--muted); margin-bottom:7px; text-transform:uppercase; letter-spacing:0.03em; }
@@ -417,6 +419,7 @@ const HISTORY = [
   { title:'Educated', author:'Tara Westover', nominator:'agarcia', date:'Mar 2026' },
   { title:'Where the Crawdads Sing', author:'Delia Owens', nominator:'tking', date:'Jan 2026' },
   { title:"Born a Crime", author:'Trevor Noah', nominator:'bpatel', date:'Nov 2025' },
+  { title:'Dungeon Crawler Carl', author:'Matt Dinniman', nominator:'btaylor', date:'Sep 2025' },
 ];
 
 let voteState = { points:{}, vetoId:null, locked:false };
@@ -496,7 +499,53 @@ function submitNomination(){
   renderNominate();
 }
 
-function coverHTML(title){ return `<div class="cover">${escapeHtml(title)}</div>`; }
+function coverHTML(title, author){
+  const id = 'cov_' + (coverIdCounter++);
+  pendingCovers.push({ id, title, author: author || '' });
+  return `<div class="cover" id="${id}">${escapeHtml(title)}</div>`;
+}
+
+let coverIdCounter = 0;
+let pendingCovers = [];
+const coverCache = {}; // "title|author" (lowercased) -> image URL, or null if no match found
+
+function flushCoverLoads(){
+  const batch = pendingCovers;
+  pendingCovers = [];
+  batch.forEach(c => loadCover(c.title, c.author, c.id));
+}
+
+async function loadCover(title, author, elId){
+  const key = (title + '|' + author).toLowerCase();
+  if (coverCache.hasOwnProperty(key)) {
+    applyCover(elId, coverCache[key]);
+    return;
+  }
+  try {
+    const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=1&fields=cover_i`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const doc = data.docs && data.docs[0];
+    const coverUrl = (doc && doc.cover_i) ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : null;
+    coverCache[key] = coverUrl;
+    applyCover(elId, coverUrl);
+  } catch (e) {
+    // Network/CORS issue, or no match — fall back to the placeholder, no error shown to the user.
+    coverCache[key] = null;
+    applyCover(elId, null);
+  }
+}
+
+function applyCover(elId, url){
+  const el = document.getElementById(elId);
+  if (!el) return; // panel may have re-rendered or switched away before the lookup finished
+  if (url) {
+    el.style.backgroundImage = `url('${url}')`;
+    el.classList.add('has-cover');
+    el.textContent = '';
+  }
+  // no url found — placeholder (gray box + title text) stays exactly as already rendered
+}
 
 function renderNominate(){
   const rollovers = NOMINATIONS.filter(n => n.rollover > 0);
@@ -508,7 +557,7 @@ function renderNominate(){
       rollovers.map(n => `
         <div class="card">
           <div class="card-body">
-            ${coverHTML(n.title)}
+            ${coverHTML(n.title, n.author)}
             <div class="card-main">
               <h3>${escapeHtml(n.title)}</h3>
               <div class="author">${escapeHtml(n.author)}</div>
@@ -527,6 +576,7 @@ function renderNominate(){
 
   document.getElementById('pendingCount').innerHTML =
     `<span class="notice-icon">👀</span><div class="notice-text"><b>${fresh.length}</b> new nomination${fresh.length===1?'':'s'} submitted so far.</div>`;
+  flushCoverLoads();
 }
 
 // ============================================================
@@ -555,7 +605,7 @@ function renderVote(){
     card.className = 'card';
     card.innerHTML = `
       <div class="card-body">
-        ${coverHTML(n.title)}
+        ${coverHTML(n.title, n.author)}
         <div class="card-main">
           <h3>${escapeHtml(n.title)}</h3>
           <div class="author">${escapeHtml(n.author)}</div>
@@ -599,6 +649,7 @@ function renderVote(){
       renderVote();
     });
   });
+  flushCoverLoads();
 }
 
 function lockInVote(){
@@ -627,7 +678,7 @@ function renderResults(){
     card.innerHTML = `
       <div class="card-body">
         <div class="rank-num${isWinner?' is-winner':''}">${r.rank ? r.rank : '–'}</div>
-        ${coverHTML(n.title)}
+        ${coverHTML(n.title, n.author)}
         <div class="card-main">
           <h3>${escapeHtml(n.title)} ${isWinner?'<span class="badge selected">🏆 Selected</span>':''} ${isVetoed?'<span class="badge danger">Vetoed</span>':''}</h3>
           <div class="author">${escapeHtml(n.author)}</div>
@@ -649,6 +700,7 @@ function renderResults(){
 
   document.getElementById('meetingCallout').innerHTML =
     `<span class="notice-icon">🗓️</span><div class="notice-text"><b>Next meeting:</b> Wednesday, August 5, 2026 — 4 weeks out.</div>`;
+  flushCoverLoads();
 }
 
 // ============================================================
@@ -661,7 +713,7 @@ function renderHistory(){
     const c = document.createElement('div');
     c.className = 'hist-card';
     c.innerHTML = `
-      ${coverHTML(h.title)}
+      ${coverHTML(h.title, h.author)}
       <div>
         <h4>${escapeHtml(h.title)}</h4>
         <div class="author">${escapeHtml(h.author)}</div>
@@ -669,6 +721,7 @@ function renderHistory(){
       </div>`;
     grid.appendChild(c);
   });
+  flushCoverLoads();
 }
 
 // ============================================================

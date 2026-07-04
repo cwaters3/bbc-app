@@ -1,8 +1,9 @@
-import 'dotenv/config';
-import { db } from './index';
-import { cycles } from './schema';
+import { config } from 'dotenv';
+config({ path: '.env.local' });
 
 async function seed() {
+  const { db } = await import('./index');
+  const { cycles } = await import('./schema');
   const existing = await db.select().from(cycles).limit(1);
   if (existing.length > 0) {
     console.log('Cycles table already has data — skipping seed.');

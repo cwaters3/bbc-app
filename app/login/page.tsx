@@ -36,6 +36,7 @@ function LoginForm() {
       return;
     }
     router.push(params.get('redirect') || '/');
+    router.refresh();
   }
 
   return (

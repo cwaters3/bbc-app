@@ -1,8 +1,9 @@
-import 'dotenv/config';
-import { migrate } from 'drizzle-orm/neon-http/migrator';
-import { db } from './index';
+import { config } from 'dotenv';
+config({ path: '.env.local' });
 
 async function main() {
+  const { migrate } = await import('drizzle-orm/neon-http/migrator');
+  const { db } = await import('./index');
   await migrate(db, { migrationsFolder: './lib/db/migrations' });
   console.log('Migrations applied.');
 }

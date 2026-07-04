@@ -7,6 +7,7 @@ import Cover from './cover';
 import NominationForm from './nomination-form';
 import HostAdvanceButton from './host-advance-button';
 import LogoutButton from './logout-button';
+import EmptyState from './empty-state';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,9 +36,12 @@ export default async function HomePage() {
 
       <div className="max-w-xl mx-auto px-4 py-5 pb-14">
         {cycle.phase !== 'nominating' ? (
-          <div className="bg-apricot-tint border-l-4 border-apricot-dark rounded-md p-3.5 text-sm">
-            Nomination week is closed for this cycle — head to the Vote tab.
-          </div>
+          <EmptyState
+            icon="📌"
+            title="Nomination week is closed"
+            description="This cycle's book has already been nominated — head to the Vote tab to see what's in the running."
+            cta={{ label: 'Go to Vote', href: '/vote' }}
+          />
         ) : (
           <>
             <div className="flex items-start gap-2.5 bg-apricot-tint border-l-4 border-apricot-dark rounded-md p-3.5 mb-4 text-sm">

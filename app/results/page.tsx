@@ -8,6 +8,7 @@ import Cover from '../cover';
 import HostAdvanceButton from '../host-advance-button';
 import StartNextCycleButton from '../start-next-cycle-button';
 import LogoutButton from '../logout-button';
+import EmptyState from '../empty-state';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,11 +39,20 @@ export default async function ResultsPage() {
 
       <div className="max-w-xl mx-auto px-4 py-5 pb-14">
         {cycle.phase !== 'results' ? (
-          <div className="bg-apricot-tint border-l-4 border-apricot-dark rounded-md p-3.5 text-sm">
-            {cycle.phase === 'nominating'
-              ? "Nomination week is still open — results aren't in yet."
-              : "Voting is still open — results aren't in yet."}
-          </div>
+          <EmptyState
+            icon="🏆"
+            title="Results aren't in yet"
+            description={
+              cycle.phase === 'nominating'
+                ? 'Nomination week is still open — check back once voting wraps up.'
+                : 'Voting is still open — check back once it closes.'
+            }
+            cta={
+              cycle.phase === 'nominating'
+                ? { label: 'Go to Nominate', href: '/' }
+                : { label: 'Go to Vote', href: '/vote' }
+            }
+          />
         ) : (
           <ResultsBody cycleId={cycle.id} />
         )}

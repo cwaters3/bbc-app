@@ -7,6 +7,7 @@ import TopNav from '../top-nav';
 import VoteForm from '../vote-form';
 import HostAdvanceButton from '../host-advance-button';
 import LogoutButton from '../logout-button';
+import EmptyState from '../empty-state';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,13 +32,19 @@ export default async function VotePage() {
 
       <div className="max-w-xl mx-auto px-4 py-5 pb-24">
         {cycle.phase === 'nominating' ? (
-          <div className="bg-apricot-tint border-l-4 border-apricot-dark rounded-md p-3.5 text-sm">
-            Nomination week is still open — voting hasn&apos;t started yet.
-          </div>
+          <EmptyState
+            icon="🗳️"
+            title="Voting hasn't started yet"
+            description="Nomination week is still open. Once it closes, all nominees reveal here and voting begins."
+            cta={{ label: 'Go to Nominate', href: '/' }}
+          />
         ) : cycle.phase === 'results' ? (
-          <div className="bg-apricot-tint border-l-4 border-apricot-dark rounded-md p-3.5 text-sm">
-            Voting has closed for this cycle — head to the Results tab.
-          </div>
+          <EmptyState
+            icon="🗳️"
+            title="Voting has closed"
+            description="This cycle's votes are in — see how it shook out on the Results tab."
+            cta={{ label: 'Go to Results', href: '/results' }}
+          />
         ) : (
           <>
             <div className="flex items-start gap-2.5 bg-apricot-tint border-l-4 border-apricot-dark rounded-md p-3.5 mb-4 text-sm">

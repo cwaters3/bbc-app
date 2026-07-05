@@ -102,15 +102,14 @@ export default async function HistoryPage({
                   )}
                 </div>
 
-                {/* Personal rating — only show if revealed */}
-                {entry.revealed && (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-bold text-muted-2 uppercase tracking-wide">
-                      Your rating
-                    </span>
-                    <RatingInput historyId={entry.id} initial={entry.myRating} />
-                  </div>
-                )}
+                {/* Personal rating — always enterable once the entry exists; only
+                    the BBC Overall average above is gated behind host reveal */}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold text-muted-2 uppercase tracking-wide">
+                    Your rating
+                  </span>
+                  <RatingInput historyId={entry.id} initial={entry.myRating} />
+                </div>
 
                 {/* Host-only reveal button */}
                 {member === HOST && !entry.revealed && (

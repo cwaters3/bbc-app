@@ -2,6 +2,7 @@ import { getCurrentMember } from '@/lib/session';
 import { getCurrentCycle } from '@/lib/cycles';
 import { getNominationsForCycle } from '@/lib/queries/nominations';
 import { getUniqueVoterCounts } from '@/lib/queries/results';
+import { getHistoryIdForCycle, getMyRating } from '@/lib/queries/history';
 import { HOST } from '@/lib/members';
 import TopNav from '../top-nav';
 import Cover from '../cover';
@@ -9,6 +10,8 @@ import HostAdvanceButton from '../host-advance-button';
 import StartNextCycleButton from '../start-next-cycle-button';
 import LogoutButton from '../logout-button';
 import EmptyState from '../empty-state';
+import { RatingInput } from '../stars';
+import type { Member } from '@/lib/members';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +57,7 @@ export default async function ResultsPage() {
             }
           />
         ) : (
-          <ResultsBody cycleId={cycle.id} />
+          <ResultsBody cycleId={cycle.id} member={member!} />
         )}
 
         {member === HOST && cycle.phase === 'voting' && (
@@ -79,7 +82,7 @@ export default async function ResultsPage() {
   );
 }
 
-async function ResultsBody({ cycleId }: { cycleId: number }) {
+async function ResultsBody({ cycleId, member }: { cycleId: number; member: Member }) {
   const nominations = await getNominationsForCycle(cycleId);
 
   const winner = nominations.find((n) => n.finalRank === 1);
@@ -93,6 +96,9 @@ async function ResultsBody({ cycleId }: { cycleId: number }) {
 
   const ranked = [winner, ...placed].filter((n): n is NonNullable<typeof n> => !!n);
   const voterCounts = await getUniqueVoterCounts(ranked.map((n) => n.id));
+
+  const historyId = winner ? await getHistoryIdForCycle(cycleId) : null;
+  const myRating = historyId ? await getMyRating(historyId, member) : null;
 
   const ORDINALS = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th'];
 
@@ -166,6 +172,14 @@ async function ResultsBody({ cycleId }: { cycleId: number }) {
                   {winner.pitches.map((p) => p.nominator).join(' & ')}
                 </b>
               </div>
+              {historyId && (
+                <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-dashed border-border">
+                  <span className="text-[11px] font-bold text-muted-2 uppercase tracking-wide">
+                    Your rating
+                  </span>
+                  <RatingInput historyId={historyId} initial={myRating} />
+                </div>
+              )}
             </div>
           </div>
         </div>

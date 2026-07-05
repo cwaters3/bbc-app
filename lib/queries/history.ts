@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { history, ratings, nominations, pitches, cycles } from '../db/schema';
-import { eq, desc, asc } from 'drizzle-orm';
+import { eq, desc, asc, and } from 'drizzle-orm';
 import type { Member } from '../members';
 
 export type HistoryEntry = {
@@ -101,10 +101,16 @@ export async function upsertRating(
     return { ok: false, error: 'Invalid star value — must be 0.5–5 in half-star increments.' };
   }
 
-  // Verify the history entry exists and ratings are revealed before allowing submission
+  // Ratings can be submitted any time once the cycle has reached results —
+  // `revealed` is a separate flag that only gates the BBC Overall *average*
+  // from showing, not a member's ability to submit their own rating.
   const [entry] = await db.select().from(history).where(eq(history.id, historyId)).limit(1);
   if (!entry) return { ok: false, error: 'History entry not found.' };
-  if (!entry.revealed) return { ok: false, error: 'Ratings are not yet revealed for this book.' };
+
+  const [cycle] = await db.select().from(cycles).where(eq(cycles.id, entry.cycleId)).limit(1);
+  if (!cycle || cycle.phase !== 'results') {
+    return { ok: false, error: 'Ratings open once results are in for this cycle.' };
+  }
 
   await db
     .insert(ratings)
@@ -119,4 +125,22 @@ export async function upsertRating(
 
 export async function revealRatings(historyId: number): Promise<void> {
   await db.update(history).set({ revealed: true }).where(eq(history.id, historyId));
+}
+
+/** Looks up the history row for a given cycle — used by the Results page to
+ * wire up the winner's rating input without a separate History page visit. */
+export async function getHistoryIdForCycle(cycleId: number): Promise<number | null> {
+  const [entry] = await db.select().from(history).where(eq(history.cycleId, cycleId)).limit(1);
+  return entry?.id ?? null;
+}
+
+/** A single member's rating for one history entry, without pulling the full
+ * history list — used alongside getHistoryIdForCycle on the Results page. */
+export async function getMyRating(historyId: number, member: Member): Promise<number | null> {
+  const [row] = await db
+    .select()
+    .from(ratings)
+    .where(and(eq(ratings.historyId, historyId), eq(ratings.member, member)))
+    .limit(1);
+  return row?.stars ?? null;
 }

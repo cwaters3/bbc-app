@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { nominations, votes, vetoes, pitches } from '../db/schema';
+import { nominations, votes, vetoes, pitches, history } from '../db/schema';
 import { eq, inArray } from 'drizzle-orm';
 import { headStart } from './nominations';
 
@@ -88,5 +88,22 @@ export async function computeAndPersistResults(cycleId: number): Promise<void> {
       .update(nominations)
       .set({ finalPoints: r.points, finalRank: r.rank, vetoedBy: r.vetoedBy })
       .where(eq(nominations.id, r.nominationId));
+  }
+
+  // Nothing else creates a history row — this is the one moment a winner is known,
+  // so this is where its permanent History record gets created. Guarded so re-running
+  // results computation for the same cycle never creates a duplicate. dateRead defaults
+  // to today; the host can correct it directly in Neon if the real meeting date differs.
+  const winner = results.find((r) => r.rank === 1);
+  if (winner) {
+    const [existing] = await db.select().from(history).where(eq(history.cycleId, cycleId)).limit(1);
+    if (!existing) {
+      await db.insert(history).values({
+        nominationId: winner.nominationId,
+        cycleId,
+        dateRead: new Date(),
+        revealed: false,
+      });
+    }
   }
 }

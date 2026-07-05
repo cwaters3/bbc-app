@@ -72,8 +72,8 @@ export function RatingDisplay({ value }: { value: number | null }) {
   if (value === null) return null;
   return (
     <span className="inline-flex items-center gap-1.5">
-      <Stars value={value} readonly />
       <span className="text-apricot-dark font-bold text-sm">{value.toFixed(1)}</span>
+      <Stars value={value} readonly />
     </span>
   );
 }
@@ -101,9 +101,9 @@ export function RatingInput({ historyId, initial }: { historyId: number; initial
 
   return (
     <span className="inline-flex items-center gap-2">
-      <Stars value={value} onRate={handleRate} />
       {saving && <span className="text-xs text-muted-2">Saving…</span>}
       {saved && !saving && <span className="text-xs text-moss-dark">Saved</span>}
+      <Stars value={value} onRate={handleRate} />
     </span>
   );
 }

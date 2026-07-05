@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { getCurrentMember } from '@/lib/session';
+import { getCurrentCycle } from '@/lib/cycles';
 import { getHistory } from '@/lib/queries/history';
 import { HOST } from '@/lib/members';
 import TopNav from '../top-nav';
@@ -17,6 +18,7 @@ export default async function HistoryPage({
   searchParams: { sort?: string };
 }) {
   const member = await getCurrentMember();
+  const cycle = await getCurrentCycle();
   const sort = searchParams.sort === 'rating' ? 'rating' : 'date';
   const entries = await getHistory(member!, sort);
 
@@ -25,7 +27,7 @@ export default async function HistoryPage({
       <div className="text-center pt-6 px-5">
         <h1 className="font-display text-moss-dark text-[34px]">The Boys Book Club</h1>
       </div>
-      <TopNav active="History" />
+      <TopNav active="History" chapterNumber={cycle?.cycleNumber} />
 
       <div className="max-w-xl mx-auto px-4 py-5 pb-14">
         <div className="flex items-start gap-2.5 bg-apricot-tint border-l-4 border-apricot-dark rounded-md p-3.5 mb-4 text-sm">

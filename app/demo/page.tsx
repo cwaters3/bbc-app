@@ -14,10 +14,16 @@ import {
 
 export default function DemoNominatePage() {
   const [freshCount, setFreshCount] = useState(DEMO_NOMINATE_INITIAL_FRESH_COUNT);
+  const [resetKey, setResetKey] = useState(0);
 
   async function handleSubmit(_input: NominationInput) {
     setFreshCount((c) => c + 1);
     return { ok: true as const };
+  }
+
+  function handleReset() {
+    setFreshCount(DEMO_NOMINATE_INITIAL_FRESH_COUNT);
+    setResetKey((k) => k + 1);
   }
 
   return (
@@ -38,7 +44,7 @@ export default function DemoNominatePage() {
           </div>
         </div>
 
-        <NominationForm onSubmit={handleSubmit} />
+        <NominationForm key={resetKey} onSubmit={handleSubmit} />
 
         <div className="text-[11px] uppercase tracking-wide text-muted-2 mb-2">
           Rolling over from last cycle
@@ -69,7 +75,9 @@ export default function DemoNominatePage() {
         </div>
 
         <div className="mt-8 pt-4 border-t border-border flex items-center justify-between">
-          <span className="text-xs text-muted-2">Demo mode</span>
+          <button onClick={handleReset} className="text-xs font-semibold text-muted-2 hover:text-ink">
+            ↺ Reset demo
+          </button>
           <Link href="/login" className="text-xs font-semibold text-moss-dark">
             Exit demo →
           </Link>

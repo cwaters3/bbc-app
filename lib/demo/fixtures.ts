@@ -74,7 +74,7 @@ export const DEMO_RESULTS_NOMINATIONS: DemoResultNomination[] = [
     reviewLink: null,
     coverUrl: null,
     rolloverCount: 0,
-    pitches: [{ nominator: 'ksanchez', blurb: 'Quietly devastating. An AI narrator done right.' }],
+    pitches: [{ nominator: 'ksanchez', blurb: 'Quietly devastating.' }],
     finalPoints: 9,
     finalRank: 1,
     vetoedBy: null,
@@ -138,6 +138,54 @@ export const DEMO_RESULTS_VOTER_COUNTS = new Map<number, number>([
 ]);
 
 export const DEMO_RESULTS_HISTORY_ID = 9999;
+
+// ---- History page fixture ----
+
+export type DemoHistoryEntry = {
+  id: number;
+  nomination: {
+    title: string;
+    author: string;
+    coverUrl: string | null;
+    reviewLink: string | null;
+    nominators: string[];
+  };
+  dateRead: Date;
+  revealed: boolean;
+  overallRating: number | null;
+  myRating: number | null;
+};
+
+export const DEMO_HISTORY_ENTRIES: DemoHistoryEntry[] = [
+  {
+    id: 301,
+    nomination: {
+      title: 'The Song of Achilles',
+      author: 'Madeline Miller',
+      coverUrl: null,
+      reviewLink: null,
+      nominators: ['lkowalski'],
+    },
+    dateRead: new Date('2026-04-14'),
+    revealed: true,
+    overallRating: 4.5,
+    myRating: 4,
+  },
+  {
+    id: 302,
+    nomination: {
+      title: 'Piranesi',
+      author: 'Susanna Clarke',
+      coverUrl: null,
+      reviewLink: null,
+      nominators: ['npatel'],
+    },
+    dateRead: new Date('2026-02-24'),
+    revealed: false,
+    overallRating: null,
+    myRating: null,
+  },
+];
 
 // ---- Vote page fixture (continued) ----
 

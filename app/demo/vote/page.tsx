@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import TopNav from '../../top-nav';
 import VoteForm from '../../vote-form';
 import { DEMO_CLUB_NAME, DEMO_CHAPTER_NUMBER, DEMO_VOTE_NOMINATIONS, DEMO_VIEWER } from '@/lib/demo/fixtures';
 
 export default function DemoVotePage() {
+  const [resetKey, setResetKey] = useState(0);
+
   async function handleSubmit() {
     return { ok: true as const };
   }
@@ -27,6 +30,7 @@ export default function DemoVotePage() {
         </div>
 
         <VoteForm
+          key={resetKey}
           nominations={DEMO_VOTE_NOMINATIONS}
           currentUser={DEMO_VIEWER}
           initialPoints={{}}
@@ -35,7 +39,12 @@ export default function DemoVotePage() {
         />
 
         <div className="mt-8 pt-4 border-t border-border flex items-center justify-between">
-          <span className="text-xs text-muted-2">Demo mode</span>
+          <button
+            onClick={() => setResetKey((k) => k + 1)}
+            className="text-xs font-semibold text-muted-2 hover:text-ink"
+          >
+            ↺ Reset demo
+          </button>
           <Link href="/login" className="text-xs font-semibold text-moss-dark">
             Exit demo →
           </Link>

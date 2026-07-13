@@ -14,9 +14,15 @@ import {
 
 export default function DemoResultsPage() {
   const [myRating, setMyRating] = useState<number | null>(null);
+  const [resetKey, setResetKey] = useState(0);
 
   async function handleRate(stars: number) {
     setMyRating(stars);
+  }
+
+  function handleReset() {
+    setMyRating(null);
+    setResetKey((k) => k + 1);
   }
 
   return (
@@ -31,6 +37,7 @@ export default function DemoResultsPage() {
 
       <div className="max-w-xl mx-auto px-4 py-5 pb-14">
         <ResultsView
+          key={resetKey}
           nominations={DEMO_RESULTS_NOMINATIONS}
           voterCounts={DEMO_RESULTS_VOTER_COUNTS}
           historyId={DEMO_RESULTS_HISTORY_ID}
@@ -39,7 +46,9 @@ export default function DemoResultsPage() {
         />
 
         <div className="mt-8 pt-4 border-t border-border flex items-center justify-between">
-          <span className="text-xs text-muted-2">Demo mode</span>
+          <button onClick={handleReset} className="text-xs font-semibold text-muted-2 hover:text-ink">
+            ↺ Reset demo
+          </button>
           <Link href="/login" className="text-xs font-semibold text-moss-dark">
             Exit demo →
           </Link>

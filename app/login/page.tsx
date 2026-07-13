@@ -80,6 +80,15 @@ function LoginForm() {
         >
           {loading ? 'Checking…' : 'Enter'}
         </button>
+
+        <div className="text-center mt-5 pt-4 border-t border-dashed border-border">
+          <p className="text-xs text-muted mb-1.5">
+            The live cycle only shows one phase at a time — see every screen with sample data instead.
+          </p>
+          <a href="/demo" className="text-sm font-semibold text-moss-dark underline">
+            View demo →
+          </a>
+        </div>
       </form>
     </div>
   );

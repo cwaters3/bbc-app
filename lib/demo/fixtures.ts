@@ -51,6 +51,96 @@ export type DemoNomination = {
   pitches: { nominator: string; blurb: string }[];
 };
 
+// ---- Results page fixture ----
+
+export type DemoResultNomination = {
+  id: number;
+  title: string;
+  author: string;
+  reviewLink: string | null;
+  coverUrl: string | null;
+  rolloverCount: number;
+  pitches: { nominator: string; blurb: string }[];
+  finalPoints: number | null;
+  finalRank: number | null;
+  vetoedBy: string | null;
+};
+
+export const DEMO_RESULTS_NOMINATIONS: DemoResultNomination[] = [
+  {
+    id: 201,
+    title: 'Klara and the Sun',
+    author: 'Kazuo Ishiguro',
+    reviewLink: null,
+    coverUrl: null,
+    rolloverCount: 0,
+    pitches: [{ nominator: 'ksanchez', blurb: 'Quietly devastating. An AI narrator done right.' }],
+    finalPoints: 9,
+    finalRank: 1,
+    vetoedBy: null,
+  },
+  {
+    id: 202,
+    title: 'The Vanishing Half',
+    author: 'Brit Bennett',
+    reviewLink: null,
+    coverUrl: null,
+    rolloverCount: 0,
+    pitches: [{ nominator: 'tholloway', blurb: 'Sisters, identity, and secrets across decades.' }],
+    finalPoints: 7,
+    finalRank: 2,
+    vetoedBy: null,
+  },
+  {
+    id: 203,
+    title: 'The Invisible Life of Addie LaRue',
+    author: 'V.E. Schwab',
+    reviewLink: null,
+    coverUrl: null,
+    rolloverCount: 1,
+    pitches: [{ nominator: 'mgunderson', blurb: 'A 300-year curse. Longing, done beautifully.' }],
+    finalPoints: 7,
+    finalRank: 3,
+    vetoedBy: null,
+  },
+  {
+    id: 204,
+    title: 'Bunny',
+    author: 'Mona Awad',
+    reviewLink: null,
+    coverUrl: null,
+    rolloverCount: 0,
+    pitches: [{ nominator: 'fabara', blurb: 'Dark academia gone feral. Not for everyone.' }],
+    finalPoints: 5,
+    finalRank: null,
+    vetoedBy: 'wchen',
+  },
+  {
+    id: 205,
+    title: "Vera Wong's Unsolicited Advice for Murderers",
+    author: 'Jesse Q. Sutanto',
+    reviewLink: null,
+    coverUrl: null,
+    rolloverCount: 0,
+    pitches: [{ nominator: 'dobrien', blurb: 'Cozy mystery with a genuinely great lead.' }],
+    finalPoints: 2,
+    finalRank: null,
+    vetoedBy: null,
+  },
+];
+
+// 2nd and 3rd place are deliberately tied at 7 points with different unique-voter
+// counts, so the demo shows off the honest tie-break explanation text too.
+export const DEMO_RESULTS_VOTER_COUNTS = new Map<number, number>([
+  [201, 6],
+  [202, 5],
+  [203, 3],
+]);
+
+export const DEMO_RESULTS_HISTORY_ID = 9999;
+
+// ---- Vote page fixture (continued) ----
+
 export const DEMO_VOTE_NOMINATIONS: DemoNomination[] = [
   {
     id: 1,

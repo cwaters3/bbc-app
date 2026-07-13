@@ -78,7 +78,18 @@ export function RatingDisplay({ value }: { value: number | null }) {
   );
 }
 
-export function RatingInput({ historyId, initial }: { historyId: number; initial: number | null }) {
+export function RatingInput({
+  historyId,
+  initial,
+  onRate,
+}: {
+  historyId: number;
+  initial: number | null;
+  /** Optional override — if provided, this runs instead of the real /api/ratings
+   * call. Used by the demo route so this exact component can run against local
+   * fixture state instead of the production database. */
+  onRate?: (stars: number) => Promise<void>;
+}) {
   const [value, setValue] = useState<number>(initial ?? 0);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -90,6 +101,14 @@ export function RatingInput({ historyId, initial }: { historyId: number; initial
     if (next === 0) return;
     setSaving(true);
     setSaved(false);
+
+    if (onRate) {
+      await onRate(next);
+      setSaving(false);
+      setSaved(true);
+      return;
+    }
+
     const res = await fetch('/api/ratings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -39,8 +39,16 @@ export default async function HomePage() {
           <EmptyState
             icon="📌"
             title="Nomination week is closed"
-            description="This cycle's book has already been nominated — head to the Vote tab to see what's in the running."
-            cta={{ label: 'Go to Vote', href: '/vote' }}
+            description={
+              cycle.phase === 'voting'
+                ? "This cycle's nominations are locked in — head to the Vote tab to see what's in the running."
+                : "Results are in for this cycle — check out the winner on the Results tab."
+            }
+            cta={
+              cycle.phase === 'voting'
+                ? { label: 'Go to Vote', href: '/vote' }
+                : { label: 'Go to Results', href: '/results' }
+            }
           />
         ) : (
           <>

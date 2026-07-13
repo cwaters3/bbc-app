@@ -3,7 +3,23 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function NominationForm() {
+export type NominationInput = {
+  title: string;
+  author: string;
+  blurb: string;
+  reviewLink: string;
+};
+
+type SubmitResult = { ok: true } | { ok: false; error: string };
+
+export default function NominationForm({
+  onSubmit,
+}: {
+  /** Optional override — if provided, this runs instead of the real /api/nominations
+   * call. Used by the demo route so this exact component can run against local
+   * fixture state instead of the production database. */
+  onSubmit?: (input: NominationInput) => Promise<SubmitResult>;
+} = {}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -19,16 +35,24 @@ export default function NominationForm() {
     setError(null);
     setSubmitting(true);
 
-    const res = await fetch('/api/nominations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, author, blurb, reviewLink }),
-    });
-    const data = await res.json();
+    const input: NominationInput = { title, author, blurb, reviewLink };
+
+    const result: SubmitResult = onSubmit
+      ? await onSubmit(input)
+      : await (async () => {
+          const res = await fetch('/api/nominations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(input),
+          });
+          const data = await res.json();
+          return res.ok ? { ok: true } : { ok: false, error: data.error || 'Something went wrong.' };
+        })();
+
     setSubmitting(false);
 
-    if (!res.ok) {
-      setError(data.error || 'Something went wrong.');
+    if (!result.ok) {
+      setError(result.error);
       return;
     }
 
@@ -40,7 +64,9 @@ export default function NominationForm() {
     setBlurb('');
     setReviewLink('');
     setOpen(false);
-    router.refresh();
+    // Real mode relies on the server refetch to show the updated count; demo mode
+    // updates its own local fixture state instead via onSubmit, so skip this.
+    if (!onSubmit) router.refresh();
   }
 
   if (!open) {

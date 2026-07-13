@@ -11,9 +11,13 @@ const TABS = [
 export default function TopNav({
   active,
   chapterNumber,
+  basePath = '',
 }: {
   active: string;
   chapterNumber?: number;
+  /** Prefix for tab links — used by the demo route to link within /demo/* instead
+   * of the real app's routes. */
+  basePath?: string;
 }) {
   return (
     <div>
@@ -29,7 +33,7 @@ export default function TopNav({
           tab.enabled ? (
             <Link
               key={tab.label}
-              href={tab.href}
+              href={`${basePath}${tab.href === '/' ? '' : tab.href}` || '/'}
               className={`pb-3 text-sm font-medium border-b-2 ${
                 active === tab.label
                   ? 'text-ink border-moss font-semibold'

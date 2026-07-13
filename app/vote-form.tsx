@@ -26,11 +26,19 @@ export default function VoteForm({
   currentUser,
   initialPoints,
   initialVeto,
+  onSubmit,
 }: {
   nominations: Nomination[];
   currentUser: string;
   initialPoints: Record<number, number>;
   initialVeto: number | null;
+  /** Optional override — if provided, this runs instead of the real /api/votes
+   * call. Used by the demo route so this exact component can run against local
+   * fixture state instead of the production database. */
+  onSubmit?: (
+    points: Record<number, number>,
+    vetoNominationId: number | null
+  ) => Promise<{ ok: true } | { ok: false; error: string }>;
 }) {
   const router = useRouter();
   const [points, setPoints] = useState<Record<number, number>>(initialPoints);
@@ -64,19 +72,26 @@ export default function VoteForm({
   async function handleSubmit() {
     setSubmitting(true);
     setError(null);
-    const res = await fetch('/api/votes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ points, vetoNominationId: vetoId }),
-    });
-    const data = await res.json().catch(() => ({}));
+
+    const result = onSubmit
+      ? await onSubmit(points, vetoId)
+      : await (async () => {
+          const res = await fetch('/api/votes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ points, vetoNominationId: vetoId }),
+          });
+          const data = await res.json().catch(() => ({}));
+          return res.ok ? { ok: true as const } : { ok: false as const, error: data.error || 'Something went wrong.' };
+        })();
+
     setSubmitting(false);
-    if (!res.ok) {
-      setError(data.error || 'Something went wrong.');
+    if (!result.ok) {
+      setError(result.error);
       return;
     }
     setSaved(true);
-    router.refresh();
+    if (!onSubmit) router.refresh();
   }
 
   const canSubmit = vetoId !== null || used > 0;

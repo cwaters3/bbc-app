@@ -27,7 +27,10 @@ async function lookupOpenLibrary(title: string, author: string): Promise<string 
 
 async function lookupGoogleBooks(title: string, author: string): Promise<string | null> {
   try {
-    const q = `intitle:${title} inauthor:${author}`;
+    // Quoting each value matters — without it, intitle:/inauthor: only bind
+    // to the single word immediately following them, and the rest of a
+    // multi-word title or author leaks out as unscoped search terms.
+    const q = `intitle:"${title}" inauthor:"${author}"`;
     const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=1`;
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;

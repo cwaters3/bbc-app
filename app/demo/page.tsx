@@ -11,10 +11,13 @@ import {
   DEMO_NOMINATE_ROLLOVER,
   DEMO_NOMINATE_INITIAL_FRESH_COUNT,
 } from '@/lib/demo/fixtures';
+import { useDemoCovers, coverKey } from '@/lib/demo/useDemoCovers';
 
 export default function DemoNominatePage() {
   const [freshCount, setFreshCount] = useState(DEMO_NOMINATE_INITIAL_FRESH_COUNT);
   const [resetKey, setResetKey] = useState(0);
+  const covers = useDemoCovers([DEMO_NOMINATE_ROLLOVER]);
+  const rolloverCover = covers[coverKey(DEMO_NOMINATE_ROLLOVER.title, DEMO_NOMINATE_ROLLOVER.author)] ?? null;
 
   async function handleSubmit(_input: NominationInput) {
     setFreshCount((c) => c + 1);
@@ -51,7 +54,7 @@ export default function DemoNominatePage() {
         </div>
         <div className="bg-card border border-border rounded-xl shadow-card mb-3.5 overflow-hidden">
           <div className="flex gap-3.5 p-4">
-            <Cover title={DEMO_NOMINATE_ROLLOVER.title} coverUrl={DEMO_NOMINATE_ROLLOVER.coverUrl} />
+            <Cover title={DEMO_NOMINATE_ROLLOVER.title} coverUrl={rolloverCover} />
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-[16px]">{DEMO_NOMINATE_ROLLOVER.title}</h3>
               <div className="text-xs text-muted uppercase mb-1.5">{DEMO_NOMINATE_ROLLOVER.author}</div>

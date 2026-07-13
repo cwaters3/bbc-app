@@ -5,9 +5,15 @@ import Link from 'next/link';
 import TopNav from '../../top-nav';
 import VoteForm from '../../vote-form';
 import { DEMO_CLUB_NAME, DEMO_CHAPTER_NUMBER, DEMO_VOTE_NOMINATIONS, DEMO_VIEWER } from '@/lib/demo/fixtures';
+import { useDemoCovers, coverKey } from '@/lib/demo/useDemoCovers';
 
 export default function DemoVotePage() {
   const [resetKey, setResetKey] = useState(0);
+  const covers = useDemoCovers(DEMO_VOTE_NOMINATIONS);
+  const nominationsWithCovers = DEMO_VOTE_NOMINATIONS.map((n) => ({
+    ...n,
+    coverUrl: covers[coverKey(n.title, n.author)] ?? n.coverUrl,
+  }));
 
   async function handleSubmit() {
     return { ok: true as const };
@@ -31,7 +37,7 @@ export default function DemoVotePage() {
 
         <VoteForm
           key={resetKey}
-          nominations={DEMO_VOTE_NOMINATIONS}
+          nominations={nominationsWithCovers}
           currentUser={DEMO_VIEWER}
           initialPoints={{}}
           initialVeto={null}

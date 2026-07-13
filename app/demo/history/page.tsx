@@ -6,16 +6,26 @@ import TopNav from '../../top-nav';
 import Cover from '../../cover';
 import { RatingDisplay, RatingInput } from '../../stars';
 import { DEMO_CLUB_NAME, DEMO_CHAPTER_NUMBER, DEMO_HISTORY_ENTRIES, type DemoHistoryEntry } from '@/lib/demo/fixtures';
+import { useDemoCovers, coverKey } from '@/lib/demo/useDemoCovers';
 
 export default function DemoHistoryPage() {
   const [entries, setEntries] = useState<DemoHistoryEntry[]>(DEMO_HISTORY_ENTRIES);
   const [sort, setSort] = useState<'date' | 'rating'>('date');
   const [resetKey, setResetKey] = useState(0);
+  const covers = useDemoCovers(entries.map((e) => e.nomination));
 
-  const sorted = [...entries].sort((a, b) => {
-    if (sort === 'rating') return (b.overallRating ?? -1) - (a.overallRating ?? -1);
-    return b.dateRead.getTime() - a.dateRead.getTime();
-  });
+  const sorted = [...entries]
+    .sort((a, b) => {
+      if (sort === 'rating') return (b.overallRating ?? -1) - (a.overallRating ?? -1);
+      return b.dateRead.getTime() - a.dateRead.getTime();
+    })
+    .map((e) => ({
+      ...e,
+      nomination: {
+        ...e.nomination,
+        coverUrl: covers[coverKey(e.nomination.title, e.nomination.author)] ?? e.nomination.coverUrl,
+      },
+    }));
 
   function handleReveal(id: number) {
     setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, revealed: true } : e)));

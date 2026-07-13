@@ -11,10 +11,16 @@ import {
   DEMO_RESULTS_VOTER_COUNTS,
   DEMO_RESULTS_HISTORY_ID,
 } from '@/lib/demo/fixtures';
+import { useDemoCovers, coverKey } from '@/lib/demo/useDemoCovers';
 
 export default function DemoResultsPage() {
   const [myRating, setMyRating] = useState<number | null>(null);
   const [resetKey, setResetKey] = useState(0);
+  const covers = useDemoCovers(DEMO_RESULTS_NOMINATIONS);
+  const nominationsWithCovers = DEMO_RESULTS_NOMINATIONS.map((n) => ({
+    ...n,
+    coverUrl: covers[coverKey(n.title, n.author)] ?? n.coverUrl,
+  }));
 
   async function handleRate(stars: number) {
     setMyRating(stars);
@@ -38,7 +44,7 @@ export default function DemoResultsPage() {
       <div className="max-w-xl mx-auto px-4 py-5 pb-14">
         <ResultsView
           key={resetKey}
-          nominations={DEMO_RESULTS_NOMINATIONS}
+          nominations={nominationsWithCovers}
           voterCounts={DEMO_RESULTS_VOTER_COUNTS}
           historyId={DEMO_RESULTS_HISTORY_ID}
           myRating={myRating}

@@ -8,6 +8,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/demo') ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/auth/login') ||
+    pathname.startsWith('/api/demo') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon');
 

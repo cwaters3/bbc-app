@@ -34,13 +34,25 @@ export function headStart(pitchCount: number): number {
   return 0;
 }
 
-/** Has this member already used their one nomination slot this cycle? */
+/**
+ * Has this member already used their one nomination slot this cycle?
+ * Rollover nominations (rolloverCount > 0) carry their original pitch
+ * forward automatically so self-vote blocking still works — that copied
+ * pitch must NOT count as this member using their nomination slot this
+ * cycle, or a member with a rollover book can never submit a new pitch.
+ */
 export async function hasAlreadyNominated(cycleId: number, member: Member): Promise<boolean> {
   const [existing] = await db
     .select({ id: pitches.id })
     .from(pitches)
     .innerJoin(nominations, eq(pitches.nominationId, nominations.id))
-    .where(and(eq(nominations.cycleId, cycleId), eq(pitches.nominator, member)))
+    .where(
+      and(
+        eq(nominations.cycleId, cycleId),
+        eq(pitches.nominator, member),
+        eq(nominations.rolloverCount, 0)
+      )
+    )
     .limit(1);
   return !!existing;
 }

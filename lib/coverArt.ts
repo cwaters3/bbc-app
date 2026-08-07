@@ -14,13 +14,25 @@ async function lookupOpenLibrary(title: string, author: string): Promise<string 
   try {
     const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(
       title
-    )}&author=${encodeURIComponent(author)}&limit=1&fields=cover_i`;
+    )}&author=${encodeURIComponent(author)}&limit=1&fields=cover_i,title`;
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error(`[coverArt] Open Library returned HTTP ${res.status} for "${title}"`);
+      return null;
+    }
     const data = await res.json();
-    const coverId = data?.docs?.[0]?.cover_i;
+    const doc = data?.docs?.[0];
+    const coverId = doc?.cover_i;
+    if (!coverId) {
+      console.error(
+        `[coverArt] Open Library: no cover_i for "${title}" — matched doc: ${
+          doc ? JSON.stringify(doc) : 'none'
+        }`
+      );
+    }
     return coverId ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : null;
-  } catch {
+  } catch (err) {
+    console.error(`[coverArt] Open Library request failed for "${title}":`, err);
     return null;
   }
 }
@@ -33,14 +45,27 @@ async function lookupGoogleBooks(title: string, author: string): Promise<string 
     const q = `intitle:"${title}" inauthor:"${author}"`;
     const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=1`;
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.error(`[coverArt] Google Books returned HTTP ${res.status} for "${title}": ${body.slice(0, 300)}`);
+      return null;
+    }
     const data = await res.json();
-    const thumbnail = data?.items?.[0]?.volumeInfo?.imageLinks?.thumbnail;
-    if (!thumbnail) return null;
+    const item = data?.items?.[0];
+    const thumbnail = item?.volumeInfo?.imageLinks?.thumbnail;
+    if (!thumbnail) {
+      console.error(
+        `[coverArt] Google Books: no thumbnail for "${title}" — totalItems: ${
+          data?.totalItems ?? 'unknown'
+        }, top match: ${item?.volumeInfo?.title ?? 'none'}`
+      );
+      return null;
+    }
     // Google serves these over http by default — force https so it doesn't
     // get silently blocked as mixed content.
     return thumbnail.replace(/^http:/, 'https:');
-  } catch {
+  } catch (err) {
+    console.error(`[coverArt] Google Books request failed for "${title}":`, err);
     return null;
   }
 }

@@ -30,11 +30,6 @@ export default async function HistoryPage({
       <TopNav active="History" chapterNumber={cycle?.cycleNumber} />
 
       <div className="max-w-xl mx-auto px-4 py-5 pb-14">
-        <div className="flex items-start gap-2.5 bg-apricot-tint border-l-4 border-apricot-dark rounded-md p-3.5 mb-4 text-sm">
-          <span>📚</span>
-          <div>Everything the club has read, in order.</div>
-        </div>
-
         <Suspense>
           <SortToggle current={sort} />
         </Suspense>

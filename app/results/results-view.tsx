@@ -46,10 +46,15 @@ export default function ResultsView({
 
   const ranked = [winner, ...placed].filter((n): n is NonNullable<typeof n> => !!n);
 
-  // Check every adjacent pair for a points tie and build an honest explanation
-  // from the real numbers — never assume which tiebreak rule actually applied.
+  // Check adjacent pairs for a points tie and build an honest explanation from the
+  // real numbers — never assume which tiebreak rule actually applied. Only explain
+  // ties that decided something: 1st vs 2nd (who wins) and 3rd vs 4th (who rolls
+  // over). 2nd vs 3rd both roll over, and anything 4th or lower is gone either way,
+  // so the order there has no consequence and the explanation would just be noise.
   const tieNotes: string[] = [];
   for (let i = 0; i < ranked.length - 1; i++) {
+    if (i !== 0 && i !== 2) continue;
+
     const a = ranked[i];
     const b = ranked[i + 1];
     if (a.finalPoints !== b.finalPoints) continue;

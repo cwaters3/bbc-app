@@ -39,6 +39,12 @@ export const nominations = pgTable('nominations', {
   finalPoints: integer('final_points'),
   finalRank: integer('final_rank'), // null if it didn't place (4th+) or was vetoed
   vetoedBy: text('vetoed_by'), // username, null if not vetoed
+  // Google Books lookups, filled in lazily the first time the Vote page loads
+  // (see lib/bookMeta.ts). metaFetchedAt marks "we asked" so a book Google has
+  // no data for isn't re-queried on every page load.
+  publishedYear: integer('published_year'),
+  pageCount: integer('page_count'),
+  metaFetchedAt: timestamp('meta_fetched_at'),
 });
 
 // The "double/triple nomination" merge model — one row per person who

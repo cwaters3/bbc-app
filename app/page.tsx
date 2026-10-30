@@ -1,10 +1,10 @@
 import { getCurrentMember } from '@/lib/session';
 import { getCurrentCycle } from '@/lib/cycles';
-import { getNominationsForCycle } from '@/lib/queries/nominations';
+import { getNominationsForCycle, getMyNomination } from '@/lib/queries/nominations';
 import { HOST } from '@/lib/members';
 import TopNav from './top-nav';
 import Cover from './cover';
-import NominationForm from './nomination-form';
+import NominationPanel from './nomination-panel';
 import HostAdvanceButton from './host-advance-button';
 import LogoutButton from './logout-button';
 import EmptyState from './empty-state';
@@ -26,6 +26,9 @@ export default async function HomePage() {
   const nominations = await getNominationsForCycle(cycle.id);
   const rollovers = nominations.filter((n) => n.rolloverCount > 0);
   const fresh = nominations.filter((n) => n.rolloverCount === 0);
+
+  const mine =
+    cycle.phase === 'nominating' && member ? await getMyNomination(cycle.id, member) : null;
 
   return (
     <div>
@@ -59,7 +62,18 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <NominationForm />
+            <NominationPanel
+              existing={
+                mine
+                  ? {
+                      title: mine.title,
+                      author: mine.author,
+                      blurb: mine.blurb,
+                      reviewLink: mine.reviewLink,
+                    }
+                  : null
+              }
+            />
 
             {rollovers.length > 0 && (
               <>
@@ -79,7 +93,7 @@ export default async function HomePage() {
                         <p className="text-sm">{n.pitches[0]?.blurb}</p>
                         <div className="flex gap-2.5 items-center mt-2 text-[11.5px]">
                           <span className="bg-apricot-tint text-apricot-dark font-bold px-2.5 py-0.5 rounded-full">
-                            Rollover {n.rolloverCount}/2
+                            Rollover {n.rolloverCount} of 2
                           </span>
                           {n.reviewLink && (
                             <a href={n.reviewLink} target="_blank" className="text-moss-dark underline">

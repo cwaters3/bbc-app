@@ -2,6 +2,7 @@ import { getCurrentMember } from '@/lib/session';
 import { getCurrentCycle } from '@/lib/cycles';
 import { getNominationsForCycle } from '@/lib/queries/nominations';
 import { getVoteState } from '@/lib/queries/votes';
+import { ensureBookMeta } from '@/lib/bookMeta';
 import { HOST, type Member } from '@/lib/members';
 import TopNav from '../top-nav';
 import VoteForm from '../vote-form';
@@ -80,7 +81,10 @@ export default async function VotePage() {
 }
 
 async function VotePageBody({ cycleId, member }: { cycleId: number; member: Member }) {
-  const nominations = await getNominationsForCycle(cycleId);
+  // Year + page count come from Google Books; ensureBookMeta fills in and saves any
+  // that are missing (usually just the first load after voting opens), then every
+  // later load reads them straight from the database.
+  const nominations = await ensureBookMeta(await getNominationsForCycle(cycleId));
   const voteState = await getVoteState(cycleId, member);
 
   if (nominations.length === 0) {

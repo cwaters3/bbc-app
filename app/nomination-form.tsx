@@ -10,18 +10,28 @@ export type NominationInput = {
   reviewLink: string;
 };
 
-type SubmitResult = { ok: true } | { ok: false; error: string };
+export type SubmitResult = { ok: true } | { ok: false; error: string };
 
 export default function NominationForm({
   onSubmit,
+  replacing,
+  onSaved,
+  onCancel,
 }: {
   /** Optional override — if provided, this runs instead of the real /api/nominations
    * call. Used by the demo route so this exact component can run against local
    * fixture state instead of the production database. */
   onSubmit?: (input: NominationInput) => Promise<SubmitResult>;
+  /** If set, the form is in "change my nomination" mode: it opens immediately, shows
+   * a heads-up banner naming the current pick, and tells the server to swap it out. */
+  replacing?: { title: string };
+  /** Called after a successful submit so the parent can swap to the status card. */
+  onSaved?: (input: NominationInput) => void;
+  /** Called when the member backs out of a change. */
+  onCancel?: () => void;
 } = {}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!replacing);
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [blurb, setBlurb] = useState('');
@@ -43,7 +53,7 @@ export default function NominationForm({
           const res = await fetch('/api/nominations', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(input),
+            body: JSON.stringify({ ...input, replace: !!replacing }),
           });
           const data = await res.json();
           return res.ok ? { ok: true } : { ok: false, error: data.error || 'Something went wrong.' };
@@ -56,7 +66,7 @@ export default function NominationForm({
       return;
     }
 
-    setToast('Nomination submitted anonymously.');
+    setToast(replacing ? 'Nomination updated.' : 'Nomination submitted anonymously.');
     setTimeout(() => setToast(null), 4000);
 
     setTitle('');
@@ -67,6 +77,12 @@ export default function NominationForm({
     // Real mode relies on the server refetch to show the updated count; demo mode
     // updates its own local fixture state instead via onSubmit, so skip this.
     if (!onSubmit) router.refresh();
+    onSaved?.(input);
+  }
+
+  function handleCancel() {
+    if (replacing) onCancel?.();
+    else setOpen(false);
   }
 
   if (!open) {
@@ -92,7 +108,19 @@ export default function NominationForm({
       onSubmit={handleSubmit}
       className="bg-card border border-border rounded-xl p-4 mb-4 shadow-sm2"
     >
-      <h3 className="font-semibold text-sm mb-3">New nomination</h3>
+      {replacing && (
+        <div className="flex items-start gap-2.5 bg-apricot-tint border-l-4 border-apricot-dark rounded-md p-3.5 mb-4 text-sm">
+          <span>🔄</span>
+          <div className="flex-1">
+            Heads up — this swaps out your current pick, <b>{replacing.title}</b>. Happy with it?
+            Just hit cancel.
+          </div>
+        </div>
+      )}
+
+      <h3 className="font-semibold text-sm mb-3">
+        {replacing ? 'Change your nomination' : 'New nomination'}
+      </h3>
 
       <div className="mb-3">
         <label className="block text-xs text-muted mb-1">Book title</label>
@@ -146,13 +174,13 @@ export default function NominationForm({
           disabled={submitting}
           className="bg-moss hover:bg-moss-dark text-white font-semibold rounded-md px-4 py-2 text-sm disabled:opacity-50"
         >
-          {submitting ? 'Submitting…' : 'Submit nomination'}
+          {submitting
+            ? 'Submitting…'
+            : replacing
+              ? 'Replace my nomination'
+              : 'Submit nomination'}
         </button>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="text-muted text-sm px-3"
-        >
+        <button type="button" onClick={handleCancel} className="text-muted text-sm px-3">
           Cancel
         </button>
       </div>

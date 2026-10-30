@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
     author: body.author ?? '',
     blurb: body.blurb ?? '',
     reviewLink: body.reviewLink,
+    replace: body.replace === true,
   });
 
   if (!result.ok) {

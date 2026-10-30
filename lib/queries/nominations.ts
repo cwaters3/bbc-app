@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { nominations, pitches } from '../db/schema';
-import { eq, and, ilike } from 'drizzle-orm';
+import { eq, and, ne, ilike } from 'drizzle-orm';
 import { lookupCoverUrl } from '../coverArt';
 import type { Member } from '../members';
 
@@ -57,7 +57,41 @@ export async function hasAlreadyNominated(cycleId: number, member: Member): Prom
   return !!existing;
 }
 
-async function findMatchingNomination(cycleId: number, title: string, author: string) {
+/**
+ * The member's own fresh nomination for this cycle (rollovers excluded, same
+ * rule as hasAlreadyNominated), or null if they haven't nominated yet. Used by
+ * the Nominate page for the post-submission status card, and by
+ * submitNomination to know what a "change my nomination" should replace.
+ */
+export async function getMyNomination(cycleId: number, member: Member) {
+  const [row] = await db
+    .select({
+      nominationId: nominations.id,
+      pitchId: pitches.id,
+      title: nominations.title,
+      author: nominations.author,
+      reviewLink: nominations.reviewLink,
+      blurb: pitches.blurb,
+    })
+    .from(pitches)
+    .innerJoin(nominations, eq(pitches.nominationId, nominations.id))
+    .where(
+      and(
+        eq(nominations.cycleId, cycleId),
+        eq(pitches.nominator, member),
+        eq(nominations.rolloverCount, 0)
+      )
+    )
+    .limit(1);
+  return row ?? null;
+}
+
+async function findMatchingNomination(
+  cycleId: number,
+  title: string,
+  author: string,
+  excludeNominationId?: number
+) {
   const [match] = await db
     .select()
     .from(nominations)
@@ -65,7 +99,8 @@ async function findMatchingNomination(cycleId: number, title: string, author: st
       and(
         eq(nominations.cycleId, cycleId),
         ilike(nominations.title, title.trim()),
-        ilike(nominations.author, author.trim())
+        ilike(nominations.author, author.trim()),
+        excludeNominationId !== undefined ? ne(nominations.id, excludeNominationId) : undefined
       )
     )
     .limit(1);
@@ -79,6 +114,9 @@ export type SubmitNominationInput = {
   author: string;
   blurb: string;
   reviewLink?: string;
+  /** When true, swap out the member's existing nomination for this one instead of
+   * declining with "already used your nomination". */
+  replace?: boolean;
 };
 
 export type SubmitNominationResult =
@@ -96,12 +134,15 @@ export async function submitNomination(
     return { ok: false, error: 'Title, author, and a blurb are all required.' };
   }
 
-  const already = await hasAlreadyNominated(input.cycleId, input.nominator);
-  if (already) {
+  const mine = await getMyNomination(input.cycleId, input.nominator);
+
+  if (mine && !input.replace) {
     return { ok: false, error: "You've already used your nomination for this cycle." };
   }
 
-  const existing = await findMatchingNomination(input.cycleId, title, author);
+  // When replacing, the member's own current pick is excluded from the duplicate
+  // check so they can resubmit the same book with a different blurb.
+  const existing = await findMatchingNomination(input.cycleId, title, author, mine?.nominationId);
 
   if (existing) {
     return {
@@ -112,6 +153,8 @@ export async function submitNomination(
 
   const coverUrl = await lookupCoverUrl(title, author);
 
+  // Insert the new nomination first, then remove the old one — if anything fails
+  // midway the member is left with an extra row rather than no nomination at all.
   const [created] = await db
     .insert(nominations)
     .values({
@@ -128,6 +171,20 @@ export async function submitNomination(
     nominator: input.nominator,
     blurb,
   });
+
+  if (mine) {
+    await db.delete(pitches).where(eq(pitches.id, mine.pitchId));
+
+    // The nomination row itself only goes away if nobody else pitched the same book.
+    const [stillPitched] = await db
+      .select({ id: pitches.id })
+      .from(pitches)
+      .where(eq(pitches.nominationId, mine.nominationId))
+      .limit(1);
+    if (!stillPitched) {
+      await db.delete(nominations).where(eq(nominations.id, mine.nominationId));
+    }
+  }
 
   return { ok: true };
 }

@@ -13,6 +13,9 @@ type Nomination = {
   coverUrl: string | null;
   rolloverCount: number;
   pitches: Pitch[];
+  // Optional so the demo route's fixtures work without them
+  publishedYear?: number | null;
+  pageCount?: number | null;
 };
 
 function headStart(pitchCount: number): number {
@@ -104,6 +107,10 @@ export default function VoteForm({
         const isVetoTarget = vetoId === n.id;
         const pointsDisabledByVeto = vetoId !== null && !isVetoTarget;
         const hs = headStart(n.pitches.length);
+        // Plain text, e.g. "2019 · 412 pages" — whichever pieces we have
+        const metaLine = [n.publishedYear, n.pageCount ? `${n.pageCount} pages` : null]
+          .filter(Boolean)
+          .join(' · ');
 
         return (
           <div key={n.id} className="bg-card border border-border rounded-xl shadow-card mb-3.5 overflow-hidden">
@@ -111,7 +118,10 @@ export default function VoteForm({
               <Cover title={n.title} coverUrl={n.coverUrl} />
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-[16px]">{n.title}</h3>
-                <div className="text-xs text-muted uppercase mb-1.5">{n.author}</div>
+                <div className={`text-xs text-muted uppercase ${metaLine ? 'mb-0.5' : 'mb-1.5'}`}>
+                  {n.author}
+                </div>
+                {metaLine && <div className="text-xs text-muted-2 mb-1.5">{metaLine}</div>}
                 {n.pitches.map((p, i) => (
                   <p key={i} className="text-sm mb-1">
                     {n.pitches.length > 1 && (
@@ -130,7 +140,7 @@ export default function VoteForm({
                   )}
                   {n.rolloverCount > 0 && (
                     <span className="bg-apricot-tint text-apricot-dark font-bold px-2.5 py-0.5 rounded-full">
-                      Rollover {n.rolloverCount}/2
+                      Rollover {n.rolloverCount} of 2
                     </span>
                   )}
                   {n.reviewLink && (

@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import TopNav from '../top-nav';
 import Cover from '../cover';
-import NominationForm, { type NominationInput } from '../nomination-form';
+import NominationPanel, { type MyNomination } from '../nomination-panel';
+import type { NominationInput } from '../nomination-form';
 import {
   DEMO_CLUB_NAME,
   DEMO_CHAPTER_NUMBER,
@@ -15,17 +16,26 @@ import { useDemoCovers, coverKey } from '@/lib/demo/useDemoCovers';
 
 export default function DemoNominatePage() {
   const [freshCount, setFreshCount] = useState(DEMO_NOMINATE_INITIAL_FRESH_COUNT);
+  const [mine, setMine] = useState<MyNomination | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const covers = useDemoCovers([DEMO_NOMINATE_ROLLOVER]);
   const rolloverCover = covers[coverKey(DEMO_NOMINATE_ROLLOVER.title, DEMO_NOMINATE_ROLLOVER.author)] ?? null;
 
-  async function handleSubmit(_input: NominationInput) {
-    setFreshCount((c) => c + 1);
+  async function handleSubmit(input: NominationInput) {
+    // First submission adds to the count; changing your pick swaps it, so no bump.
+    if (!mine) setFreshCount((c) => c + 1);
+    setMine({
+      title: input.title.trim(),
+      author: input.author.trim(),
+      blurb: input.blurb.trim(),
+      reviewLink: input.reviewLink.trim() || null,
+    });
     return { ok: true as const };
   }
 
   function handleReset() {
     setFreshCount(DEMO_NOMINATE_INITIAL_FRESH_COUNT);
+    setMine(null);
     setResetKey((k) => k + 1);
   }
 
@@ -47,7 +57,7 @@ export default function DemoNominatePage() {
           </div>
         </div>
 
-        <NominationForm key={resetKey} onSubmit={handleSubmit} />
+        <NominationPanel key={resetKey} existing={mine} onSubmit={handleSubmit} />
 
         <div className="text-[11px] uppercase tracking-wide text-muted-2 mb-2">
           Rolling over from last cycle
@@ -61,7 +71,7 @@ export default function DemoNominatePage() {
               <p className="text-sm">{DEMO_NOMINATE_ROLLOVER.pitches[0]?.blurb}</p>
               <div className="flex gap-2.5 items-center mt-2 text-[11.5px]">
                 <span className="bg-apricot-tint text-apricot-dark font-bold px-2.5 py-0.5 rounded-full">
-                  Rollover {DEMO_NOMINATE_ROLLOVER.rolloverCount}/2
+                  Rollover {DEMO_NOMINATE_ROLLOVER.rolloverCount} of 2
                 </span>
               </div>
             </div>
